@@ -1,5 +1,5 @@
-#include "lookup.h"
-#include "combat.h"
+#include "src/lookup.h"
+#include "src/combat.h"
 
 int main (void)
 {
@@ -7,7 +7,7 @@ int main (void)
     gvCliDC_DatabaseOpen();
     char choice[5];
     int loop = 1;
-    printf("Welcome to Combat V2.0\n\n");
+    printf("Welcome to clidnbatter!\n\n");
 
     while (loop == 1)
     {

@@ -67,8 +67,6 @@ void gvCliDC_Lookup_Cr()
 
     const char *sql = "SELECT id, name, type, cr, hp FROM monsters WHERE cr = ?";
 
-    char *ErrMsg = NULL;
-
     rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
     if (rc != SQLITE_OK)
     {
@@ -102,12 +100,12 @@ void gvCliDC_Lookup_Cr()
     sqlite3_finalize(stmt);
 }
 
-void gvCliDC_Lookup_Hp(int hp)
-{
+// void gvCliDC_Lookup_Hp(int hp)
+// {
 
-}
+// }
 
-void gvCliDC_Lookup_Name(char *name)
-{
+// void gvCliDC_Lookup_Name(char *name)
+// {
 
-}
+// }
