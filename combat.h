@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "lookup.h"
 
 #ifndef COMBAT_H
 #define COMBAT_H
@@ -24,6 +25,6 @@ typedef struct part{
 
 // part enemies[] = {{"Orc", false, 0, 0, 0, 13, 15, NULL}, {"Orog", false, 0, 0, 0, 18, 53, NULL}}; // Test - do I need individually named structs or array of structs?
 
-void gvCombat_CombatLoop(void);
+void gvCliDC_Combat_Main(void);
 
 #endif  /*combat.h*/

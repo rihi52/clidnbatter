@@ -5,12 +5,13 @@
  *  SECTION - Local function prototypes                                   * 
  *========================================================================* 
  */
-void setInitiative(struct part *person, int numAddition);
-void addToInitiativeOrder(part *pAddition, int numAddition);
-void printInitOrder();
-part *createNode(struct part *enemy);
-void dealDamage(int init, int count, int amount);
-void checkIntegerInputs(int *numberOf);
+static void vCliDC_CombatMainLoop();
+static void setInitiative(struct part *person, int numAddition);
+static void addToInitiativeOrder(part *pAddition, int numAddition);
+static void printInitOrder();
+static part *createNode(struct part *enemy);
+static void dealDamage(int init, int count, int amount);
+static void checkIntegerInputs(int *numberOf);
 
 /*========================================================================* 
  *  SECTION - Local variables                                             * 
@@ -50,64 +51,13 @@ part *combatants[INITIATIVE_SPREAD];
  *========================================================================* 
  */
 
-void gvCombat_CombatLoop(void)
+static void vCliDC_CombatMainLoop()
 {
-    int numOrc = 0, numOrog = 0, numMagmin = 0, numGiant = 2, damaged = 0, damAmount = 0;
-    char event[5];
     part *temp = NULL;
+    int damaged = 0, damAmount = 0;
+    char event[5];
     bool combat = true;
-    
-    for(int i = 0; i < INITIATIVE_SPREAD; i++){
-        combatants[i] = NULL;
-    }
 
-    printf("\n**** Begin acquiring player character information ****\n");
-
-    printf("*** Intiative ***\n");
-    printf("** Must be between 0 and 29, inclusive **\n\n");
-    /* Assign player and unique initiative */
-    setInitiative(&ravi, 1);
-    // setInitiative(&finn, 1);
-    // setInitiative(&pax, 1);
-    // setInitiative(&theon, 1);
-    // setInitiative(&okssort, 1);
-    // setInitiative(&ildmane, 1);
-
-    printf("\n**** End acquiring player character information ****\n");
-    
-    printf("\n**** Begin acquiring enemy information ****\n");
-    
-    /* part count - establish how many enemies of which type */
-    printf("How many %s: ", orc.name);
-    checkIntegerInputs(&numOrc);
-   
-    printf("How many %s: ", orog.name);
-    checkIntegerInputs(&numOrog);
-
-    printf("How many %s: ", magmin.name);
-    checkIntegerInputs(&numMagmin);
-
-    /* Assign Enemy Initiative */
-    if (0 < numOrc)
-    {
-        setInitiative(&orc, numOrc);
-    }
-
-    if (0 < numOrog)
-    {
-        setInitiative(&orog, numOrog);
-    }
-
-    if (0 < numMagmin)
-    {
-        setInitiative(&magmin, numMagmin);
-    }
-    
-    printf("\n**** End acquiring enemy information ****\n\n");
-
-    printInitOrder();
-
- /* Main loop for combat */
     while (combat == true)
     {
         int check = 1;
@@ -216,30 +166,9 @@ void gvCombat_CombatLoop(void)
                 break;
         } 
     }
-
-    /* Free mallocs */    
-    for (int i = 0; i < INITIATIVE_SPREAD; i++)
-    {
-        if (NULL != combatants[i])
-        {
-            temp = NULL;
-            part *current = combatants[i];
-
-            while(current != NULL)
-            {
-                temp = current;
-                current = current->next;
-                if (temp->isMalloc)
-                {
-                    free(temp);
-                }
-            }
-        }
-    }
-    return;
 }
 
-void setInitiative(struct part *person, int numAddition)
+static void setInitiative(struct part *person, int numAddition)
 {
     int check = 1;
     char buffer[10];
@@ -276,23 +205,30 @@ void setInitiative(struct part *person, int numAddition)
     return;
 }
 
-void checkIntegerInputs(int *numberOf)
+static void checkIntegerInputs(int *numberOf)
 {
-    int check = 1;    
-    while(check == 1)
+    int check = 1;
+    char buffer[10];
+    char *endptr;
+    while (check == 1)
     {
-        if (scanf("%d", numberOf) != 1 || *numberOf < 0)
+        fgets(buffer, sizeof(buffer), stdin);
+
+        *numberOf = strtol(buffer, &endptr, 10);
+        if (endptr == buffer || (*endptr != '\0' && *endptr != '\n'))
         {
-            getchar();
-            printf("Error - must be a positive integer: ");
+            printf("Error - must be a positive integer: \n");
+            continue;
         }
-        else if (*numberOf == 'c')
+
+        if (0 <= *numberOf)
         {
-            return;
+            check = 0;
         }
         else
         {
-            check++;
+            printf("Error - must be a positive integer: \n");
+            continue;
         }
     }
 }
@@ -346,7 +282,7 @@ part *createNode(struct part *enemy)
     return new;
 }
 
-void addToInitiativeOrder(part *pAddition, int numAddition)
+static void addToInitiativeOrder(part *pAddition, int numAddition)
 {
     if (NULL == pAddition)
     {
@@ -389,7 +325,7 @@ void addToInitiativeOrder(part *pAddition, int numAddition)
     }   
 }
 
-void printInitOrder()
+static void printInitOrder()
 {
     printf("\n****** Intiative Order Start ******\n\n");
 
@@ -421,7 +357,7 @@ void printInitOrder()
     return;
 }
 
-void dealDamage(int init, int count, int amount)
+static void dealDamage(int init, int count, int amount)
 {
     /* set initiative count */
     part *temp = combatants[init];
@@ -438,7 +374,140 @@ void dealDamage(int init, int count, int amount)
     return;
 }
 
+void gvCliDC_Combat_LookupMonster()
+{
+    char buffer[10];
+    char *endptr;
+    int userCR, rc;
+    sqlite3_stmt *stmt = NULL;
+
+    printf("CR Lookup: ");
+    if(fgets(buffer, sizeof(buffer), stdin) != NULL)
+    {
+        userCR = strtol(buffer, &endptr, 10);
+    }
+    //scanf("%d", &userCR);
+
+    const char *sql = "SELECT id, name, type, cr, hp FROM monsters WHERE cr = ?";
+
+    char *ErrMsg = NULL;
+
+    rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_close(pMonsterDb);
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, userCR);
+
+    printf("ID  | Name                      |         Type         | CR | HP\n");
+    printf("---------------------------------------------------------------------\n");
+
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+    {
+        int id = sqlite3_column_int(stmt, 0);         // First column: ID
+        const char *name = (const char *)sqlite3_column_text(stmt, 1); // Second column: Name
+        const char *type = (const char *)sqlite3_column_text(stmt, 2);
+        int cr = sqlite3_column_int(stmt, 3);        // Fourth column: CR
+        int hp = sqlite3_column_int(stmt, 4);        // Third column: HP
+        
+
+        printf("%-3d | %-25s | %-20s | %-2d | %-3d\n", id, name, type, cr, hp);
+    }
+
+    if (rc != SQLITE_DONE) {
+        fprintf(stderr, "Error during iteration: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_close(pMonsterDb);
+    }
+
+    sqlite3_finalize(stmt);
+}
+
 /*========================================================================* 
  *  SECTION - Global function definitions                                 * 
  *========================================================================* 
  */
+void gvCliDC_Combat_Main(void)
+{
+    
+    part *temp = NULL;
+    int numOrc = 0, numOrog = 0, numMagmin = 0, numGiant = 2, damaged = 0, damAmount = 0;
+    char event[5];
+    bool combat = true;
+    
+    for(int i = 0; i < INITIATIVE_SPREAD; i++){
+        combatants[i] = NULL;
+    }
+
+    printf("\n**** Begin acquiring player character information ****\n");
+
+    printf("*** Intiative ***\n");
+    printf("** Must be between 0 and 29, inclusive **\n\n");
+    /* Assign player and unique initiative */
+    setInitiative(&ravi, 1);
+    // setInitiative(&finn, 1);
+    // setInitiative(&pax, 1);
+    // setInitiative(&theon, 1);
+    // setInitiative(&okssort, 1);
+    // setInitiative(&ildmane, 1);
+
+    printf("\n**** End acquiring player character information ****\n");
+    
+    printf("\n**** Begin acquiring enemy information ****\n");
+    
+    /* part count - establish how many enemies of which type */
+    printf("How many %s: ", orc.name);
+    checkIntegerInputs(&numOrc);
+   
+    printf("How many %s: ", orog.name);
+    checkIntegerInputs(&numOrog);
+
+    printf("How many %s: ", magmin.name);
+    checkIntegerInputs(&numMagmin);
+
+    /* Assign Enemy Initiative */
+    if (0 < numOrc)
+    {
+        setInitiative(&orc, numOrc);
+    }
+
+    if (0 < numOrog)
+    {
+        setInitiative(&orog, numOrog);
+    }
+
+    if (0 < numMagmin)
+    {
+        setInitiative(&magmin, numMagmin);
+    }
+    
+    printf("\n**** End acquiring enemy information ****\n\n");
+
+    printInitOrder();
+
+    /* Main loop for combat */
+    vCliDC_CombatMainLoop();
+
+    /* Free mallocs */    
+    for (int i = 0; i < INITIATIVE_SPREAD; i++)
+    {
+        if (NULL != combatants[i])
+        {
+            temp = NULL;
+            part *current = combatants[i];
+
+            while(current != NULL)
+            {
+                temp = current;
+                current = current->next;
+                if (temp->isMalloc)
+                {
+                    free(temp);
+                }
+            }
+        }
+    }
+    return;
+}

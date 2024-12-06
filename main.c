@@ -4,7 +4,7 @@
 int main (void)
 {
     pMonsterDb = NULL;
-    gvCombat_DatabaseOpen();
+    gvCliDC_DatabaseOpen();
     char choice[5];
     int loop = 1;
     printf("Welcome to Combat V2.0\n\n");
@@ -31,11 +31,11 @@ int main (void)
         switch (choice[0])
         {
             case 'l':
-                gvCombat_Lookup_Cr();
+                gvCliDC_Lookup_Cr();
                 break;
 
             case 'c':
-                gvCombat_CombatLoop();
+                gvCliDC_Combat_Main();
                 break;
 
             case 'a':
@@ -51,5 +51,5 @@ int main (void)
         }
         choice[0] = '\0';
     }
-    gvCombat_DatabaseClose();
+    gvCliDC_DatabaseClose();
 }

@@ -30,7 +30,7 @@ sqlite3 *pMonsterDb;
  *  SECTION - Global function definitions                                 * 
  *========================================================================* 
  */
-void gvCombat_DatabaseOpen()
+void gvCliDC_DatabaseOpen()
 {
     
     int rc = sqlite3_open("monsters.db", &pMonsterDb);
@@ -46,12 +46,12 @@ void gvCombat_DatabaseOpen()
     return;
 }
 
-void gvCombat_DatabaseClose()
+void gvCliDC_DatabaseClose()
 {
     sqlite3_close(pMonsterDb);
 }
 
-void gvCombat_Lookup_Cr()
+void gvCliDC_Lookup_Cr()
 {
     char buffer[10];
     char *endptr;
@@ -102,12 +102,12 @@ void gvCombat_Lookup_Cr()
     sqlite3_finalize(stmt);
 }
 
-void gvCombat_Lookup_Hp(int hp)
+void gvCliDC_Lookup_Hp(int hp)
 {
 
 }
 
-void gvCombat_Lookup_Name(char *name)
+void gvCliDC_Lookup_Name(char *name)
 {
 
 }
