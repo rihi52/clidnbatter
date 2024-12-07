@@ -6,6 +6,9 @@
  *========================================================================* 
  */
 static void vCliDC_Combat_MainLoop();
+static void vCliDC_Combat_PlayerSetUp();
+static bool vCliDC_Combat_ChoosePlayers();
+static part *vCliDC_Combat_CreatePlayer(char *name);
 static void vCliDC_Combat_SetInitiative(struct part *person, int numAddition);
 static void vCliDC_Combat_AddToInitiativeOrder(part *pAddition, int numAddition);
 static void vCliDC_Combat_PrintInitiativeOrder();
@@ -17,7 +20,11 @@ static void vCliDC_Combat_CheckIntegerInputs(int *numberOf);
  *  SECTION - Local variables                                             * 
  *========================================================================* 
  */
+
+#define CHARACTER_BUFFER    250
+
 /***** Combatants *****/
+char players[CHARACTER_BUFFER];
 /* To add more enemies, create a new part struct and point orc to it*/
 
 /* Orc Enemies */
@@ -54,13 +61,183 @@ static void vCliDC_Combat_PlayerSetUp()
 {
     char prompt[10];
 
-    printf("Player Set Up\n\n");
-    printf("Do you wish to add any new players?: ");
+    printf("*** Player Set Up ***\n\n");
+    
     do 
     {
+        printf("Do you wish to add any new players? (y/n): ");
         fgets(prompt, sizeof(prompt), stdin);
-    } while (!isalpha(prompt[0])); // TODO: not a great way to check input probably. I want yes or no specifically.
+    } while (strlen(prompt) != 1 && ('y' != prompt[0] && 'n' != prompt[0]));
+
+    if ('n' == prompt[0])
+    {
+        return;
+    }
+
+    char name[50];
+    int rc, Ac, Hp;
+    sqlite3_stmt *stmt = NULL;
     
+    while (1)
+    {
+        printf("New Player name: ");
+        fgets(name, sizeof(name), stdin);
+        if (name != NULL && name[0] != '\n' && name[0] != ' ')
+        {
+            name[strcspn(name, "\n")] = '\0';
+        }
+        else
+        {
+            printf("Error: blank input. Starting over.\n");
+            continue;
+        }
+
+        name[strcspn(name, "\n")] = '\0';
+
+        printf("New Player armor class: ");
+        vCliDC_Combat_CheckIntegerInputs(&Ac);
+
+        printf("New Player hit point maximum: ");
+        vCliDC_Combat_CheckIntegerInputs(&Hp);
+        break;
+    }    
+
+    const char *sql = "INSERT INTO players (name, ac, hp) VALUES (?, ?, ?)";
+
+    rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        return;
+    }
+
+    rc = sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind name: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return;
+    }
+
+    rc = sqlite3_bind_int(stmt, 2, Ac);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind AC: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return;
+    }
+
+    rc = sqlite3_bind_int(stmt, 3, Hp);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind HP: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return;
+    }
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE)
+    {
+        fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(pMonsterDb));
+    }
+    else
+    {
+        printf("New player added successfully.\n");
+    }
+    
+    sqlite3_finalize(stmt);
+}
+
+static bool vCliDC_Combat_ChoosePlayers()
+{
+    while (1)
+    {
+        printf("Please enter desired players from db separated by commas (eg. ravi, finn, pax): ");
+        fgets(players, sizeof(players), stdin);
+        if (players == NULL && players[0] == '\n' && players[0] == ' ')
+        {
+            printf("Error: Input blank. Try again or enter x to quit.\n");
+            continue;
+        }
+        else if (players[0] == 'x' && players[1] == '\n')
+        {
+            return false;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    int length = strlen(players);
+    for (int i = 0; i < length; i++)
+    {
+        if (players[i] != ' ' && players[i] != ',' && players[i] != '\n')
+        {
+            tolower(players[i]);
+        }
+    }
+    return true;
+}
+
+static part *vCliDC_Combat_CreatePlayer(char *name)
+{
+    /* Error check */
+    part *new = malloc(sizeof(part));
+    if (NULL == new){
+        printf("New node creation failed\n");
+        return NULL;
+    }
+
+    int rc;
+    sqlite3_stmt *stmt = NULL;
+
+    const char *sql = "SELECT name, ac, hp FROM players WHERE name = ?";
+
+    rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        free(new);
+        return NULL;
+    }
+
+    rc = sqlite3_bind_text(stmt, 1, name, -1, SQLITE_TRANSIENT);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind name: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        free(new);
+        return NULL;
+    }
+
+    if (sqlite3_step(stmt) != SQLITE_ROW)
+    {
+        fprintf(stderr, "Player with name '%s' not found in database\n", name);
+        sqlite3_finalize(stmt);
+        free(new);
+        return NULL;
+    }
+
+    /* Assign player attributes to new part struct */
+    new->name = strdup((const char *)sqlite3_column_text(stmt, 0));
+    if (new->name == NULL) {
+        fprintf(stderr, "Memory allocation failed for name\n");
+        sqlite3_finalize(stmt);
+        free(new);
+        return NULL;
+    }
+    new->ac = sqlite3_column_int(stmt, 1);
+    new->hp = sqlite3_column_int(stmt, 2);
+    new->uniqueChar = true;
+    new->initiative = 0;
+    new->initiativeSpot = 0;
+    new->isMalloc = true;
+    new->turnCount = 0;
+    new->next = NULL;
+
+    sqlite3_finalize(stmt);
+    return new;
 }
 
 static void vCliDC_Combat_MainLoop()
@@ -182,6 +359,7 @@ static void vCliDC_Combat_MainLoop()
 
 static void vCliDC_Combat_SetInitiative(struct part *person, int numAddition)
 {
+    printf("\n** Initiative must be between 0 and 29, inclusive **\n\n");
     int check = 1;
     char buffer[10];
     char *endptr;
@@ -229,7 +407,7 @@ static void vCliDC_Combat_CheckIntegerInputs(int *numberOf)
         *numberOf = strtol(buffer, &endptr, 10);
         if (endptr == buffer || (*endptr != '\0' && *endptr != '\n'))
         {
-            printf("Error - must be a positive integer: \n");
+            printf("Error - must be a positive integer: ");
             continue;
         }
 
@@ -334,7 +512,7 @@ static void vCliDC_Combat_AddToInitiativeOrder(part *pAddition, int numAddition)
             temp = temp->next;
         }
         temp->next = pAddition;
-    }   
+    }
 }
 
 static void vCliDC_Combat_PrintInitiativeOrder()
@@ -353,7 +531,7 @@ static void vCliDC_Combat_PrintInitiativeOrder()
         temp = combatants[i];
         while(temp != NULL)
         {
-            /*ERROR OCCURS HERE*/ if (0 < temp->hp)
+            if (0 < temp->hp)
             {
                 printf("| %4d | %4d | %-15s | %2d | %4d |\n", temp->initiative, count, temp->name, temp->ac, temp->hp);
             }
@@ -406,7 +584,6 @@ void gvCliDC_Combat_LookupMonster()
     if (rc != SQLITE_OK)
     {
         fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
-        sqlite3_close(pMonsterDb);
         return;
     }
 
@@ -429,7 +606,6 @@ void gvCliDC_Combat_LookupMonster()
 
     if (rc != SQLITE_DONE) {
         fprintf(stderr, "Error during iteration: %s\n", sqlite3_errmsg(pMonsterDb));
-        sqlite3_close(pMonsterDb);
     }
 
     sqlite3_finalize(stmt);
@@ -441,21 +617,64 @@ void gvCliDC_Combat_LookupMonster()
  */
 void gvCliDC_Combat_Main(void)
 {
-    vCliDC_Combat_PlayerSetUp();
-    
-    part *temp = NULL;
-    int numOrc = 0, numOrog = 0, numMagmin = 0;
-    
     for(int i = 0; i < INITIATIVE_SPREAD; i++){
         combatants[i] = NULL;
     }
 
     printf("\n**** Begin acquiring player character information ****\n");
 
-    printf("*** Intiative ***\n");
-    printf("** Must be between 0 and 29, inclusive **\n\n");
+    vCliDC_Combat_PlayerSetUp();
+    if(!vCliDC_Combat_ChoosePlayers())
+    {
+        return;
+    }
+
+    char namePlayers[CHARACTER_BUFFER];    
+    char endchar = ' ';
+    int length = strlen(players), startPosition = 0;
+    part *newPlayer = NULL;
+    while (1)
+    {
+        memset(namePlayers, '\0', sizeof(namePlayers));
+        int nameIndex = 0;
+        for (int i = startPosition; i <= length; i++)
+        {
+            if (players[i] != ',' && players[i] != '\n')
+            {
+                if (nameIndex < CHARACTER_BUFFER)
+                {
+                    namePlayers[nameIndex] = players[i];
+                    nameIndex++;
+                }                
+            }
+            else
+            {
+                endchar = players[i];
+                startPosition = i + 1;
+                break;
+            }
+        }
+        namePlayers[nameIndex] = '\0';
+
+        printf("namePlayer: %s\n", namePlayers);
+        newPlayer = vCliDC_Combat_CreatePlayer(namePlayers);
+        if (newPlayer == NULL)
+        {
+            printf("Error: newPlayer returned NULL.\n");
+            return;
+        }
+        vCliDC_Combat_SetInitiative(newPlayer, 1);
+        if (endchar == '\n')
+        {
+            break;
+        }
+    }
+    
+    part *temp = NULL;
+    int numOrc = 0, numOrog = 0, numMagmin = 0;
+
     /* Assign player and unique initiative */
-    vCliDC_Combat_SetInitiative(&ravi, 1);
+    // vCliDC_Combat_SetInitiative(&ravi, 1);
     // vCliDC_Combat_SetInitiative(&finn, 1);
     // vCliDC_Combat_SetInitiative(&pax, 1);
     // vCliDC_Combat_SetInitiative(&theon, 1);

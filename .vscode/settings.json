@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "math.h": "c",
-        "combat.h": "c"
+        "combat.h": "c",
+        "typeinfo": "c"
     }
 }
