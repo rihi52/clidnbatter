@@ -55,12 +55,17 @@ static void vCliDC_Combat_PlayerSetUp()
     char prompt[10];
 
     printf("Player Set Up\n\n");
-    printf("Do you wish to add any new players?: ");
+    
     do 
     {
+        printf("Do you wish to add any new players? (y/n): ");
         fgets(prompt, sizeof(prompt), stdin);
-    } while (!isalpha(prompt[0])); // TODO: not a great way to check input probably. I want yes or no specifically.
-    
+    } while (strlen(prompt) != 1 && ('y' != prompt[0] && 'n' != prompt[0]));
+
+    if ('n' == prompt[0])
+    {
+        return;
+    }    
 }
 
 static void vCliDC_Combat_MainLoop()
