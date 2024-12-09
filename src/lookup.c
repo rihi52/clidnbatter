@@ -1,5 +1,6 @@
 #include "lookup.h"
 
+
 /*========================================================================* 
  *  SECTION - Local definitions 
  *========================================================================* 
@@ -9,7 +10,6 @@
  *  SECTION - External variables that cannot be defined in header files   * 
  *========================================================================*
  */
-sqlite3 *pMonsterDb;
 
 /*========================================================================* 
  *  SECTION - Local function prototypes                                   * 
@@ -50,6 +50,11 @@ void gvCliDC_DatabaseClose()
 {
     sqlite3_close(pMonsterDb);
 }
+
+// int giCliDC_Lookup_Player(part *player)
+// {
+    
+// }
 
 void gvCliDC_Lookup_Cr()
 {

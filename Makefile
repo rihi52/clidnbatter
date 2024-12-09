@@ -9,7 +9,7 @@ OBJDIR = obj
 BINDIR = bin
 
 # Files
-SOURCES = main.c $(SRCDIR)/combat.c $(SRCDIR)/lookup.c
+SOURCES = main.c $(SRCDIR)/combat.c $(SRCDIR)/lookup.c $(SRCDIR)/add.c 
 OBJECTS = $(patsubst %.c, $(OBJDIR)/%.o, $(notdir $(SOURCES)))
 EXECUTABLE = $(BINDIR)/clidnbatter
 
