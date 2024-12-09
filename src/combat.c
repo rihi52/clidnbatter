@@ -1,4 +1,3 @@
-#include <math.h>
 #include "combat.h"
 
 /*========================================================================* 
@@ -7,7 +6,7 @@
  */
 static void vCliDC_Combat_MainLoop();
 static void vCliDC_Combat_PlayerSetUp();
-static bool vCliDC_Combat_ChoosePlayers();
+static int CliDC_Combat_ChoosePlayers();
 static part *vCliDC_Combat_CreatePlayer(char *name);
 static void vCliDC_Combat_SetInitiative(struct part *person, int numAddition);
 static void vCliDC_Combat_AddToInitiativeOrder(part *pAddition, int numAddition);
@@ -15,6 +14,7 @@ static void vCliDC_Combat_PrintInitiativeOrder();
 static part *vCliDC_Combat_CreateNode(struct part *enemy);
 static void vCliDC_Combat_DealDamage(int init, int count, int amount);
 static void vCliDC_Combat_CheckIntegerInputs(int *numberOf);
+static void vCliDC_Combat_FreeCombatants();
 
 /*========================================================================* 
  *  SECTION - Local variables                                             * 
@@ -75,8 +75,7 @@ static void vCliDC_Combat_PlayerSetUp()
     }
 
     char name[50];
-    int rc, Ac, Hp;
-    sqlite3_stmt *stmt = NULL;
+    int Ac, Hp;    
     
     while (1)
     {
@@ -100,55 +99,17 @@ static void vCliDC_Combat_PlayerSetUp()
         printf("New Player hit point maximum: ");
         vCliDC_Combat_CheckIntegerInputs(&Hp);
         break;
-    }    
+    }
 
-    const char *sql = "INSERT INTO players (name, ac, hp) VALUES (?, ?, ?)";
-
-    rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
-    if (rc != SQLITE_OK)
+    if (0 != giCliDC_Add_NewPlayer(name, Ac, Hp))
     {
-        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        printf("Error accessing database.\n");
         return;
-    }
-
-    rc = sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC);
-    if (rc != SQLITE_OK)
-    {
-        fprintf(stderr, "Failed to bind name: %s\n", sqlite3_errmsg(pMonsterDb));
-        sqlite3_finalize(stmt);
-        return;
-    }
-
-    rc = sqlite3_bind_int(stmt, 2, Ac);
-    if (rc != SQLITE_OK)
-    {
-        fprintf(stderr, "Failed to bind AC: %s\n", sqlite3_errmsg(pMonsterDb));
-        sqlite3_finalize(stmt);
-        return;
-    }
-
-    rc = sqlite3_bind_int(stmt, 3, Hp);
-    if (rc != SQLITE_OK)
-    {
-        fprintf(stderr, "Failed to bind HP: %s\n", sqlite3_errmsg(pMonsterDb));
-        sqlite3_finalize(stmt);
-        return;
-    }
-
-    rc = sqlite3_step(stmt);
-    if (rc != SQLITE_DONE)
-    {
-        fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(pMonsterDb));
-    }
-    else
-    {
-        printf("New player added successfully.\n");
     }
     
-    sqlite3_finalize(stmt);
 }
 
-static bool vCliDC_Combat_ChoosePlayers()
+static int CliDC_Combat_ChoosePlayers()
 {
     while (1)
     {
@@ -161,7 +122,7 @@ static bool vCliDC_Combat_ChoosePlayers()
         }
         else if (players[0] == 'x' && players[1] == '\n')
         {
-            return false;
+            return 6;
         }
         else
         {
@@ -177,11 +138,11 @@ static bool vCliDC_Combat_ChoosePlayers()
             tolower(players[i]);
         }
     }
-    return true;
+    return 0;
 }
 
 static part *vCliDC_Combat_CreatePlayer(char *name)
-{
+{   // TODO: How can I move this to lookup.c??
     /* Error check */
     part *new = malloc(sizeof(part));
     if (NULL == new){
@@ -611,6 +572,32 @@ void gvCliDC_Combat_LookupMonster()
     sqlite3_finalize(stmt);
 }
 
+static void vCliDC_Combat_FreeCombatants()
+{
+    for (int i = 0; i < INITIATIVE_SPREAD; i++)
+    {
+        if (NULL != combatants[i])
+        {            
+            part *current = combatants[i];
+            part *temp;
+
+            while(current != NULL)
+            {
+                temp = current;
+                current = current->next;
+                if (temp->uniqueChar)
+                {
+                    free(temp->name);
+                }
+                if (temp->isMalloc)
+                {
+                    free(temp);
+                }
+            }
+        }
+    }
+}
+
 /*========================================================================* 
  *  SECTION - Global function definitions                                 * 
  *========================================================================* 
@@ -624,7 +611,7 @@ void gvCliDC_Combat_Main(void)
     printf("\n**** Begin acquiring player character information ****\n");
 
     vCliDC_Combat_PlayerSetUp();
-    if(!vCliDC_Combat_ChoosePlayers())
+    while (0 != CliDC_Combat_ChoosePlayers())
     {
         return;
     }
@@ -672,14 +659,6 @@ void gvCliDC_Combat_Main(void)
     
     int numOrc = 0, numOrog = 0, numMagmin = 0;
 
-    /* Assign player and unique initiative */
-    // vCliDC_Combat_SetInitiative(&ravi, 1);
-    // vCliDC_Combat_SetInitiative(&finn, 1);
-    // vCliDC_Combat_SetInitiative(&pax, 1);
-    // vCliDC_Combat_SetInitiative(&theon, 1);
-    // vCliDC_Combat_SetInitiative(&okssort, 1);
-    // vCliDC_Combat_SetInitiative(&ildmane, 1);
-
     printf("\n**** End acquiring player character information ****\n");
     
     printf("\n**** Begin acquiring enemy information ****\n");
@@ -717,24 +696,7 @@ void gvCliDC_Combat_Main(void)
     /* Main loop for combat */
     vCliDC_Combat_MainLoop();
 
-    /* Free mallocs */    
-    for (int i = 0; i < INITIATIVE_SPREAD; i++)
-    {
-        if (NULL != combatants[i])
-        {            
-            part *current = combatants[i];
-            part *temp;
-
-            while(current != NULL)
-            {
-                temp = current;
-                current = current->next;
-                if (temp->isMalloc)
-                {
-                    free(temp);
-                }
-            }
-        }
-    }
+    /* Free mallocs */
+    vCliDC_Combat_FreeCombatants();    
     return;
 }

@@ -1,5 +1,6 @@
 #include "lookup.h"
 
+
 /*========================================================================* 
  *  SECTION - Local definitions 
  *========================================================================* 
@@ -50,6 +51,11 @@ void gvCliDC_DatabaseClose()
 {
     sqlite3_close(pMonsterDb);
 }
+
+// int giCliDC_Lookup_Player(part *player)
+// {
+    
+// }
 
 void gvCliDC_Lookup_Cr()
 {
