@@ -1,13 +1,11 @@
-#include <ctype.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include "lookup.h"
-
 #ifndef COMBAT_H
 #define COMBAT_H
+
+#include "lookup.h"
+#include "add.h"
+#include "sqlite3.h"
+#include <stdbool.h>
+#include <stdio.h>
 
 #define INITIATIVE_SPREAD 30
 
