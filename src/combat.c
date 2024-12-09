@@ -670,7 +670,6 @@ void gvCliDC_Combat_Main(void)
         }
     }
     
-    part *temp = NULL;
     int numOrc = 0, numOrog = 0, numMagmin = 0;
 
     /* Assign player and unique initiative */
@@ -722,9 +721,9 @@ void gvCliDC_Combat_Main(void)
     for (int i = 0; i < INITIATIVE_SPREAD; i++)
     {
         if (NULL != combatants[i])
-        {
-            temp = NULL;
+        {            
             part *current = combatants[i];
+            part *temp;
 
             while(current != NULL)
             {
