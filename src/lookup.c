@@ -10,7 +10,6 @@
  *  SECTION - External variables that cannot be defined in header files   * 
  *========================================================================*
  */
-sqlite3 *pMonsterDb;
 
 /*========================================================================* 
  *  SECTION - Local function prototypes                                   * 
