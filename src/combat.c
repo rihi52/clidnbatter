@@ -11,8 +11,8 @@ static part *vCliDC_Combat_CreatePlayer(char *name);
 static int CliDC_Combat_ChooseMonstsers();
 static part *vCliDC_Combat_CreateMonster(char *name);
 
-static void vCliDC_Combat_SetInitiative(struct part *person, int numAddition);
-static void vCliDC_Combat_AddToInitiativeOrder(part *pAddition, int numAddition);
+static void vCliDC_Combat_SetInitiative(struct part *person);
+static void vCliDC_Combat_AddToInitiativeOrder(part *pAddition);
 static void vCliDC_Combat_PrintInitiativeOrder();
 
 static void vCliDC_Combat_DealDamage(int init, int count, int amount);
@@ -305,7 +305,7 @@ part *vCliDC_Combat_CreateMonster(char *name)
     return new;
 }
 
-static void vCliDC_Combat_SetInitiative(struct part *person, int numAddition)
+static void vCliDC_Combat_SetInitiative(struct part *person)
 {
     printf("\n** Initiative must be between 0 and 29, inclusive **\n\n");
     int check = 1;
@@ -348,11 +348,11 @@ static void vCliDC_Combat_SetInitiative(struct part *person, int numAddition)
     }
 
     /* 1 for a single unique combatant - should #define */
-    vCliDC_Combat_AddToInitiativeOrder(person, numAddition);
+    vCliDC_Combat_AddToInitiativeOrder(person);
     return;
 }
 
-static void vCliDC_Combat_AddToInitiativeOrder(part *pAddition, int numAddition)
+static void vCliDC_Combat_AddToInitiativeOrder(part *pAddition)
 {
     if (NULL == pAddition)
     {
@@ -706,7 +706,7 @@ void gvCliDC_Combat_Main(void)
             printf("Error: newPlayer returned NULL.\n");
             return;
         }
-        vCliDC_Combat_SetInitiative(newPlayer, 1);
+        vCliDC_Combat_SetInitiative(newPlayer);
         if (endchar == '\n')
         {
             break;
@@ -777,7 +777,7 @@ void gvCliDC_Combat_Main(void)
             newMonster = newMonster->next;
         }
         
-        vCliDC_Combat_SetInitiative(head, num);
+        vCliDC_Combat_SetInitiative(head);
         if (endchar == '\n')
         {
             break;
