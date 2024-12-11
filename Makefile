@@ -1,7 +1,7 @@
 # Compiler and Flags
 CC = gcc
-CFLAGS = -Wall -Wextra -g
-LDFLAGS = -lsqlite3  # Link with sqlite3 library
+CFLAGS = -Wall -Wextra -g -I$(SRCDIR)
+LDFLAGS = -lsqlite3
 
 # Directories
 SRCDIR = src
@@ -10,11 +10,11 @@ BINDIR = bin
 
 # Files
 SOURCES = main.c $(SRCDIR)/combat.c $(SRCDIR)/lookup.c $(SRCDIR)/add.c 
-OBJECTS = $(patsubst %.c, $(OBJDIR)/%.o, $(notdir $(SOURCES)))
+OBJECTS = $(SOURCES:%.c=$(OBJDIR)/%.o)
 EXECUTABLE = $(BINDIR)/clidnbatter
 
 # Create the output directories
-$(shell mkdir -p $(OBJDIR) $(BINDIR))
+$(shell mkdir -p $(OBJDIR)/src $(BINDIR))
 
 # Rules
 all: $(EXECUTABLE)
@@ -24,19 +24,16 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(OBJECTS) -o $@ $(LDFLAGS)
 
 # Compile source files into object files
-$(OBJDIR)/%.o: $(SRCDIR)/%.c
+$(OBJDIR)/%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(OBJDIR)/main.o: main.c
+$(OBJDIR)/src/%.o: $(SRCDIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Clean up generated files
 clean:
-	rm -f $(OBJDIR)/*.o $(EXECUTABLE)
+	rm -f $(OBJDIR)/*.o $(OBJDIR)/src/*.o $(EXECUTABLE)
 	rm -rf $(OBJDIR) $(BINDIR)
-
-# Phony targets
-.PHONY: all clean
 
 # old organization
 # CC = gcc

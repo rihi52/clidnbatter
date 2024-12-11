@@ -154,47 +154,9 @@ static part *vCliDC_Combat_CreatePlayer(char *name)
         printf("New node creation failed\n");
         return NULL;
     }
-
-    int rc;
-    sqlite3_stmt *stmt = NULL;
-
-    const char *sql = "SELECT name, ac, hp FROM players WHERE name = ?";
-
-    rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
-    if (rc != SQLITE_OK)
-    {
-        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
-        free(new);
-        return NULL;
-    }
-
-    rc = sqlite3_bind_text(stmt, 1, name, -1, SQLITE_TRANSIENT);
-    if (rc != SQLITE_OK)
-    {
-        fprintf(stderr, "Failed to bind name: %s\n", sqlite3_errmsg(pMonsterDb));
-        sqlite3_finalize(stmt);
-        free(new);
-        return NULL;
-    }
-
-    if (sqlite3_step(stmt) != SQLITE_ROW)
-    {
-        fprintf(stderr, "Player with name '%s' not found in database\n", name);
-        sqlite3_finalize(stmt);
-        free(new);
-        return NULL;
-    }
-
-    /* Assign player attributes to new part struct */
-    new->name = strdup((const char *)sqlite3_column_text(stmt, 0));
-    if (new->name == NULL) {
-        fprintf(stderr, "Memory allocation failed for name\n");
-        sqlite3_finalize(stmt);
-        free(new);
-        return NULL;
-    }
-    new->ac = sqlite3_column_int(stmt, 1);
-    new->hp = sqlite3_column_int(stmt, 2);
+    new->name = name;
+    new->ac = giCliDC_Lookup_PlayerAc(name);
+    new->hp = giCliDC_Lookup_PlayerHp(name);
     new->uniqueChar = true;
     new->initiative = 0;
     new->initiativeSpot = 0;
@@ -202,7 +164,6 @@ static part *vCliDC_Combat_CreatePlayer(char *name)
     new->turnCount = 0;
     new->next = NULL;
 
-    sqlite3_finalize(stmt);
     return new;
 }
 
@@ -360,23 +321,6 @@ static void vCliDC_Combat_AddToInitiativeOrder(part *pAddition)
     }
     /* Used to cycle through additions */
     part *temp = NULL;
-
-    /* if a non-unique enemy with multiple instances, make more nodes */
-    // if (numAddition > 1)
-    // {        
-    //     //part *head = pAddition;
-    //     temp = pAddition;
-    //     for(int i = 0; i < numAddition - 1; i++)
-    //     {
-    //         newEnemy = vCliDC_Combat_CreateMonster(pAddition);
-    //         if (NULL == newEnemy)
-    //         {
-    //             printf("newEnemy returned as NULL\n");
-    //         }
-    //         temp->next = newEnemy;
-    //         temp = newEnemy;
-    //     }
-    // }
 
     /* Place combatant in the initiative order */
     if(NULL == combatants[pAddition->initiative])
@@ -648,7 +592,6 @@ static void vCliDC_Combat_FreeCombatants()
             {
                 temp = current;
                 current = current->next;
-                free(temp->name);
                 free(temp);
             }
         }
@@ -713,13 +656,13 @@ void gvCliDC_Combat_Main(void)
         }
     }
 
-    printf("\n**** End acquiring player character information ****\n");
-    printf("\n**** Begin acquiring enemy information ****\n");
-
     while (0 != CliDC_Combat_ChooseMonstsers())
     {
         CliDC_Combat_ChooseMonstsers();
     }
+
+    printf("\n**** End acquiring player character information ****\n");
+    printf("\n**** Begin acquiring enemy information ****\n");
 
     char nameMonsters[MONSTER_BUFFER];    
     endchar = ' ';

@@ -1,6 +1,7 @@
 #include "lookup.h"
 
 
+
 /*========================================================================* 
  *  SECTION - Local definitions 
  *========================================================================* 
@@ -51,10 +52,77 @@ void gvCliDC_DatabaseClose()
     sqlite3_close(pMonsterDb);
 }
 
-// int giCliDC_Lookup_Player(part *player)
-// {
-    
-// }
+int giCliDC_Lookup_PlayerAc(char *Name)
+{
+    int rc, ac;
+    sqlite3_stmt *stmt = NULL;
+
+    const char *sql = "SELECT ac FROM players WHERE name = ?";
+
+    rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        return 0;
+    }
+
+    rc = sqlite3_bind_text(stmt, 1, Name, -1, SQLITE_TRANSIENT);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind name: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return 0;
+    }
+
+    if (sqlite3_step(stmt) != SQLITE_ROW)
+    {
+        fprintf(stderr, "Player with name '%s' not found in database\n", Name);
+        sqlite3_finalize(stmt);
+        return 0;
+    }
+
+    /* Assign player attributes to new part struct */
+    ac = sqlite3_column_int(stmt, 0);
+
+    sqlite3_finalize(stmt);
+    return ac;
+}
+
+int giCliDC_Lookup_PlayerHp(char *Name)
+{
+    int rc, hp;
+    sqlite3_stmt *stmt = NULL;
+
+    const char *sql = "SELECT hp FROM players WHERE name = ?";
+
+    rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        return 0;
+    }
+
+    rc = sqlite3_bind_text(stmt, 1, Name, -1, SQLITE_TRANSIENT);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind name: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return 0;
+    }
+
+    if (sqlite3_step(stmt) != SQLITE_ROW)
+    {
+        fprintf(stderr, "Player with name '%s' not found in database\n", Name);
+        sqlite3_finalize(stmt);
+        return 0;
+    }
+
+    /* Assign player attributes to new part struct */
+    hp = sqlite3_column_int(stmt, 0);
+
+    sqlite3_finalize(stmt);
+    return hp;
+}
 
 void gvCliDC_Lookup_Cr()
 {

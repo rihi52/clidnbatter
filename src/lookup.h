@@ -4,9 +4,6 @@
 #include "combat.h"
 #include "sqlite3.h"
 #include <ctype.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -24,6 +21,8 @@ void gvCliDC_DatabaseOpen();
 void gvCliDC_DatabaseClose();
 void gvCliDC_Lookup_Cr();
 void gvCliDC_Lookup_Hp(int hp);
-void gvCliDC_Lookup_Name(char *name);
+int gvCliDC_Lookup_Name(char *name);
+int giCliDC_Lookup_PlayerAc(char *Name);
+int giCliDC_Lookup_PlayerHp(char *Name);
 
 #endif /* lookup.h */
