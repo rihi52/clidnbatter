@@ -122,7 +122,7 @@ static int CliDC_Combat_ChoosePlayers()
         fgets(players, sizeof(players), stdin);
         if (players == NULL && players[0] == '\n' && players[0] == ' ')
         {
-            printf("Error: Input blank. Try again or enter x to quit.\n");
+            printf("Error: Input blank. Try again or enter x to return home.\n\n");
             continue;
         }
         else if (players[0] == 'x' && players[1] == '\n')
@@ -147,16 +147,25 @@ static int CliDC_Combat_ChoosePlayers()
 }
 
 static part *vCliDC_Combat_CreatePlayer(char *name)
-{   // TODO: How can I move this to lookup.c??
-    /* Error check */
+{
     part *new = malloc(sizeof(part));
     if (NULL == new){
         printf("New node creation failed\n");
         return NULL;
     }
-    new->name = name;
+    new->name = strdup(name);
     new->ac = giCliDC_Lookup_PlayerAc(name);
+    if ( new->ac == 0)
+    {
+        free(new->name);
+        return NULL;
+    }
     new->hp = giCliDC_Lookup_PlayerHp(name);
+    if (new->hp == 0)
+    {
+        free(new->name);
+        return NULL;
+    }
     new->uniqueChar = true;
     new->initiative = 0;
     new->initiativeSpot = 0;
@@ -592,6 +601,7 @@ static void vCliDC_Combat_FreeCombatants()
             {
                 temp = current;
                 current = current->next;
+                free(temp->name);
                 free(temp);
             }
         }
@@ -610,20 +620,30 @@ void gvCliDC_Combat_Main(void)
 
     printf("\n**** Begin acquiring player character information ****\n");
 
-    vCliDC_Combat_PlayerSetUp();
-    while (0 != CliDC_Combat_ChoosePlayers())
-    {
-        return;
-    }
-
     char namePlayers[CHARACTER_BUFFER];    
     char endchar = ' ';
-    int length = strlen(players), startPosition = 0;
+    int length, startPosition = 0, loop = 0;
     part *newPlayer = NULL;
-    while (1)
+    /* Loop to acquire player information 
+     * Two loop statuses so the user input functions can be returned to if needed */
+    while (0 == loop || 1 == loop)
     {
+        if (0 == loop)
+        {
+            /* Add new players if desired */
+            vCliDC_Combat_PlayerSetUp();
+            /* Choose existing players and make sure there are no invalid characters */
+            while (0 != CliDC_Combat_ChoosePlayers())
+            {
+                return;
+            }
+            length = strlen(players);
+            loop = 1;
+        }        
+
         memset(namePlayers, '\0', sizeof(namePlayers));
         int nameIndex = 0;
+        /* Read the inputted players into players[] one at a time */
         for (int i = startPosition; i <= length; i++)
         {
             if (players[i] != ',' && players[i] != '\n')
@@ -641,17 +661,30 @@ void gvCliDC_Combat_Main(void)
                 break;
             }
         }
+        /* Null terminate player's name */
         namePlayers[nameIndex] = '\0';
 
-        newPlayer = vCliDC_Combat_CreatePlayer(namePlayers);
+        /* If there is no name do not attempt to create a player struct and exit loop */
+        if ('\0' != namePlayers[0])
+        {
+            newPlayer = vCliDC_Combat_CreatePlayer(namePlayers);
+        }
+        else
+        {
+            loop = 2;
+            break;
+        }
+        
         if (newPlayer == NULL)
         {
-            printf("Error: newPlayer returned NULL.\n");
-            return;
+            printf("Please re-enter players' names or enter 'x' to return to home\n\n");
+            loop = 0;
+            continue;
         }
         vCliDC_Combat_SetInitiative(newPlayer);
         if (endchar == '\n')
         {
+            loop = 2;
             break;
         }
     }
