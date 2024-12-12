@@ -1,7 +1,9 @@
-#ifndef ADD_H
-#define ADD_H
+#ifndef MODIFY_H
+#define MODIFY_H
 
 #include "sqlite3.h"
+#include "lookup.h"
+#include "global.h"
 #include <stdint.h>
 #include <stdio.h>
 
@@ -14,6 +16,8 @@
  *  SECTION - Extern global function prototypes                           * 
  *========================================================================* 
  */
-int giCliDC_Add_NewPlayer(char *Name, int16_t Ac, int16_t Hp);
+void gvCliDC_Modify_MainLoop();
+void gvCliDC_Modify_EnterPlayerInformation();
+int giCliDC_Modify_NewPlayer(char *Name, int16_t Ac, int16_t Hp);
 
-#endif /* add.h */
+#endif /* modify.h */
