@@ -12,7 +12,7 @@ int main (void)
     while (loop == 1)
     {
         int check = 1;
-        printf("Options:\n");
+        printf("Home Options:\n");
         printf("l: lookup a monster(s)\nc: enter combat\na: add a player stat block\nx: exit program\nPlease choose from the above: ");
         while (check == 1)
         {

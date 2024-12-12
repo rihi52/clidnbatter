@@ -415,7 +415,7 @@ static void vCliDC_Combat_PrintInitiativeOrder()
 
 static void vCliDC_Combat_PrintCurrentTurn()
 {    
-    printf("Initiative Count: %d\n", CurrentInitiative);
+    printf("Initiative Turn: %d\n\n", CurrentInitiative);
 }
 
 static void vCliDC_Combat_IncrementTurn()
@@ -447,7 +447,7 @@ static void vCliDC_Combat_MainLoop()
         damaged = 0;
         damAmount = 0;
         bool confirmed = false;
-        printf("Options:\n'd' for damage\n'n' for next turn\n'x' for end combat\n"); 
+        printf("Combat Options:\n'd' for damage\n'n' for next turn\n'x' for end combat\n"); 
         printf("What happens: ");
         while (check == 1)
         {
