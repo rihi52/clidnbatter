@@ -90,7 +90,7 @@ static void vCliDC_Combat_PlayerSetUp()
     {
         printf("New Player name: ");
         fgets(name, sizeof(name), stdin);
-        if (name != NULL && name[0] != '\n' && name[0] != ' ')
+        if (name[0] != '\n' && name[0] != ' ')
         {
             name[strcspn(name, "\n")] = '\0';
         }
@@ -124,7 +124,7 @@ static int CliDC_Combat_ChoosePlayers()
     {
         printf("\nPlease enter desired players from db separated only by commas (eg. ravi,finn,pax): ");
         fgets(players, sizeof(players), stdin);
-        if (players == NULL && players[0] == '\n' && players[0] == ' ')
+        if (players[0] == '\n' && players[0] == ' ')
         {
             printf("Error: Input blank. Try again or enter x to return home.\n\n");
             continue;
@@ -186,7 +186,7 @@ static int CliDC_Combat_ChooseMonstsers()
     {
         printf("\nPlease enter desired monsters from db separated only by commas (eg. orc,orog,magmin): ");
         fgets(monsters, sizeof(monsters), stdin);
-        if (monsters == NULL && monsters[0] == '\n' && monsters[0] == ' ')
+        if (monsters[0] == '\n' && monsters[0] == ' ')
         {
             printf("Error: Input blank. Try again or enter x to quit.\n");
             continue;
@@ -415,7 +415,7 @@ static void vCliDC_Combat_PrintInitiativeOrder()
 
 static void vCliDC_Combat_PrintCurrentTurn()
 {    
-    printf("Initiative Count: %d\n", CurrentInitiative);
+    printf("Initiative Turn: %d\n\n", CurrentInitiative);
 }
 
 static void vCliDC_Combat_IncrementTurn()
@@ -447,7 +447,7 @@ static void vCliDC_Combat_MainLoop()
         damaged = 0;
         damAmount = 0;
         bool confirmed = false;
-        printf("Options:\n'd' for damage\n'n' for next turn\n'x' for end combat\n"); 
+        printf("Combat Options:\n'd' for damage\n'n' for next turn\n'x' for end combat\n"); 
         printf("What happens: ");
         while (check == 1)
         {
