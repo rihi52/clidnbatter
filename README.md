@@ -28,3 +28,18 @@ This is in very early stage development by someone, me, with limited coding expe
   - HP
 - Monsters can be searched and displayed by any of the above stats
 - Custom monsters can be imported to the db via sqlite or using the cli interface of the program itself
+
+# Screenshots
+
+## Combat Tracker
+![image](https://github.com/rihi52/clidnbatter/blob/main/assets/startcombat.png)
+
+![image](https://github.com/rihi52/clidnbatter/blob/main/assets/monstercombat.png)
+
+![image](https://github.com/rihi52/clidnbatter/blob/main/assets/combatorder.png)
+
+![image](https://github.com/rihi52/clidnbatter/blob/main/assets/afterturn.png)
+
+## Look Up
+
+![image](https://github.com/rihi52/clidnbatter/blob/main/assets/lookup.png)

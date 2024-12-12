@@ -14,6 +14,8 @@ static part *vCliDC_Combat_CreateMonster(char *name);
 static void vCliDC_Combat_SetInitiative(struct part *person);
 static void vCliDC_Combat_AddToInitiativeOrder(part *pAddition);
 static void vCliDC_Combat_PrintInitiativeOrder();
+static void vCliDC_Combat_PrintCurrentTurn();
+static void vCliDC_Combat_IncrementTurn();
 
 static void vCliDC_Combat_DealDamage(int init, int count, int amount);
 static void vCliDC_Combat_CheckIntegerInputs(int *numberOf);
@@ -51,10 +53,12 @@ part pax = {"pax", true, 0, 0, 0, 16, 57, false, NULL};
 part finn = {"finn", true, 0, 0, 0, 15, 36, false, NULL};
 part ravi = {"ravi", true, 0, 0, 0, 16, 34, false, NULL};
 
-/* Global Variables*/
 //static int currentInit = 0;
 static int numCombatants = 1;
 static int damInit = 0;
+static int UsedInitiative[INITIATIVE_SPREAD];
+static int CurrentInitiative = 0;
+static int PrintCounter = -1;
 part *combatants[INITIATIVE_SPREAD];
 
  /*=======================================================================* 
@@ -118,7 +122,7 @@ static int CliDC_Combat_ChoosePlayers()
 {
     while (1)
     {
-        printf("Please enter desired players from db separated only by commas (eg. ravi,finn,pax): ");
+        printf("\nPlease enter desired players from db separated only by commas (eg. ravi,finn,pax): ");
         fgets(players, sizeof(players), stdin);
         if (players == NULL && players[0] == '\n' && players[0] == ' ')
         {
@@ -180,7 +184,7 @@ static int CliDC_Combat_ChooseMonstsers()
 {
     while (1)
     {
-        printf("Please enter desired monsters from db separated only by commas (eg. orc,orog,magmin): ");
+        printf("\nPlease enter desired monsters from db separated only by commas (eg. orc,orog,magmin): ");
         fgets(monsters, sizeof(monsters), stdin);
         if (monsters == NULL && monsters[0] == '\n' && monsters[0] == ' ')
         {
@@ -403,8 +407,28 @@ static void vCliDC_Combat_PrintInitiativeOrder()
     }
     printf("---------------------------------------------\n");
 
-    printf("\n****** Intiative Order End ******\n");
+    printf("\n****** Intiative Order End ******\n\n");
+
+    PrintCounter++;
     return;
+}
+
+static void vCliDC_Combat_PrintCurrentTurn()
+{    
+    printf("Initiative Count: %d\n", CurrentInitiative);
+}
+
+static void vCliDC_Combat_IncrementTurn()
+{
+    if (0 != UsedInitiative[PrintCounter])
+    {
+        CurrentInitiative = UsedInitiative[PrintCounter];
+    }
+    else
+    {
+        PrintCounter = 0;
+        CurrentInitiative = UsedInitiative[PrintCounter];
+    }
 }
 
 static void vCliDC_Combat_MainLoop()
@@ -416,6 +440,8 @@ static void vCliDC_Combat_MainLoop()
 
     while (combat == true)
     {
+        
+        vCliDC_Combat_PrintCurrentTurn();
         int check = 1;
         damInit = 0;
         damaged = 0;
@@ -504,9 +530,8 @@ static void vCliDC_Combat_MainLoop()
                 vCliDC_Combat_CheckIntegerInputs(&damAmount);
 
                 vCliDC_Combat_DealDamage(damInit, damaged, damAmount);
-
+                
                 vCliDC_Combat_PrintInitiativeOrder();
-
                 break;
             case 'x':
                 printf("\n********** Combat Over **********\n\n");
@@ -514,7 +539,9 @@ static void vCliDC_Combat_MainLoop()
                 break;
 
             case 'n':
-                printf("Next Turn\n");          
+                printf("Next Turn\n");
+                vCliDC_Combat_PrintInitiativeOrder();
+                vCliDC_Combat_IncrementTurn();
                 break;
 
             default:
@@ -689,13 +716,13 @@ void gvCliDC_Combat_Main(void)
         }
     }
 
+    printf("\n**** End acquiring player character information ****\n");
+    printf("\n**** Begin acquiring enemy information ****\n");
+
     while (0 != CliDC_Combat_ChooseMonstsers())
     {
         CliDC_Combat_ChooseMonstsers();
-    }
-
-    printf("\n**** End acquiring player character information ****\n");
-    printf("\n**** Begin acquiring enemy information ****\n");
+    }    
 
     char nameMonsters[MONSTER_BUFFER];    
     endchar = ' ';
@@ -762,6 +789,26 @@ void gvCliDC_Combat_Main(void)
     printf("\n**** End acquiring enemy information ****\n\n");
 
     vCliDC_Combat_PrintInitiativeOrder();
+
+    /* Fill array */
+    for (int i = INITIATIVE_SPREAD - 1; i > 0; i--)
+    {
+        UsedInitiative[i] = 0;
+    }
+
+    /* Find highest initiative */
+    int count = 0;
+    for (int i = INITIATIVE_SPREAD - 1; i > 0; i--)
+    {
+        if (NULL != combatants[i])
+        {
+            UsedInitiative[count] = combatants[i]->initiative;
+            count++;
+        }
+    }
+
+    /* Initialize turn order */
+    vCliDC_Combat_IncrementTurn();
 
     /* Main loop for combat */
     vCliDC_Combat_MainLoop();

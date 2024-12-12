@@ -150,8 +150,9 @@ void gvCliDC_Lookup_Cr()
 
     sqlite3_bind_int(stmt, 1, userCR);
 
-    printf("ID  | Name                      |         Type         | CR | HP\n");
-    printf("---------------------------------------------------------------------\n");
+    printf("---------------------------------------------------------------------------\n");
+    printf("| ID | Name                      |             Type             | CR | HP |\n");
+    printf("---------------------------------------------------------------------------\n");
 
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
     {
@@ -160,10 +161,11 @@ void gvCliDC_Lookup_Cr()
         const char *type = (const char *)sqlite3_column_text(stmt, 2);
         int cr = sqlite3_column_int(stmt, 3);        // Fourth column: CR
         int hp = sqlite3_column_int(stmt, 4);        // Third column: HP
-        
 
-        printf("%-3d | %-25s | %-20s | %-2d | %-3d\n", id, name, type, cr, hp);
+        printf("|%-3d | %-25s | %-28s | %-2d | %-3d|\n", id, name, type, cr, hp);
     }
+
+    printf("---------------------------------------------------------------------------\n");
 
     if (rc != SQLITE_DONE) {
         fprintf(stderr, "Error during iteration: %s\n", sqlite3_errmsg(pMonsterDb));
