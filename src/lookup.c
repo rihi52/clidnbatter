@@ -1,5 +1,7 @@
 #include "lookup.h"
 
+
+
 /*========================================================================* 
  *  SECTION - Local definitions 
  *========================================================================* 
@@ -9,7 +11,6 @@
  *  SECTION - External variables that cannot be defined in header files   * 
  *========================================================================*
  */
-sqlite3 *pMonsterDb;
 
 /*========================================================================* 
  *  SECTION - Local function prototypes                                   * 
@@ -51,6 +52,78 @@ void gvCliDC_DatabaseClose()
     sqlite3_close(pMonsterDb);
 }
 
+int giCliDC_Lookup_PlayerAc(char *Name)
+{
+    int rc, ac;
+    sqlite3_stmt *stmt = NULL;
+
+    const char *sql = "SELECT ac FROM players WHERE name = ?";
+
+    rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        return 0;
+    }
+
+    rc = sqlite3_bind_text(stmt, 1, Name, -1, SQLITE_TRANSIENT);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind name: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return 0;
+    }
+
+    if (sqlite3_step(stmt) != SQLITE_ROW)
+    {
+        fprintf(stderr, "Player with name '%s' not found in database\n", Name);
+        sqlite3_finalize(stmt);
+        return 0;
+    }
+
+    /* Assign player attributes to new part struct */
+    ac = sqlite3_column_int(stmt, 0);
+
+    sqlite3_finalize(stmt);
+    return ac;
+}
+
+int giCliDC_Lookup_PlayerHp(char *Name)
+{
+    int rc, hp;
+    sqlite3_stmt *stmt = NULL;
+
+    const char *sql = "SELECT hp FROM players WHERE name = ?";
+
+    rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        return 0;
+    }
+
+    rc = sqlite3_bind_text(stmt, 1, Name, -1, SQLITE_TRANSIENT);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind name: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return 0;
+    }
+
+    if (sqlite3_step(stmt) != SQLITE_ROW)
+    {
+        fprintf(stderr, "Player with name '%s' not found in database\n", Name);
+        sqlite3_finalize(stmt);
+        return 0;
+    }
+
+    /* Assign player attributes to new part struct */
+    hp = sqlite3_column_int(stmt, 0);
+
+    sqlite3_finalize(stmt);
+    return hp;
+}
+
 void gvCliDC_Lookup_Cr()
 {
     char buffer[10];
@@ -77,8 +150,9 @@ void gvCliDC_Lookup_Cr()
 
     sqlite3_bind_int(stmt, 1, userCR);
 
-    printf("ID  | Name                      |         Type         | CR | HP\n");
-    printf("---------------------------------------------------------------------\n");
+    printf("---------------------------------------------------------------------------\n");
+    printf("| ID | Name                      |             Type             | CR | HP |\n");
+    printf("---------------------------------------------------------------------------\n");
 
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
     {
@@ -87,10 +161,11 @@ void gvCliDC_Lookup_Cr()
         const char *type = (const char *)sqlite3_column_text(stmt, 2);
         int cr = sqlite3_column_int(stmt, 3);        // Fourth column: CR
         int hp = sqlite3_column_int(stmt, 4);        // Third column: HP
-        
 
-        printf("%-3d | %-25s | %-20s | %-2d | %-3d\n", id, name, type, cr, hp);
+        printf("|%-3d | %-25s | %-28s | %-2d | %-3d|\n", id, name, type, cr, hp);
     }
+
+    printf("---------------------------------------------------------------------------\n");
 
     if (rc != SQLITE_DONE) {
         fprintf(stderr, "Error during iteration: %s\n", sqlite3_errmsg(pMonsterDb));

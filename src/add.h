@@ -1,28 +1,19 @@
-#ifndef LOOKUP_H
-#define LOOKUP_H
+#ifndef ADD_H
+#define ADD_H
 
-#include "combat.h"
 #include "sqlite3.h"
-#include <ctype.h>
-#include <stdlib.h>
-#include <string.h>
+#include <stdint.h>
+#include <stdio.h>
 
 /*========================================================================* 
  *  SECTION - Global definitions 
  *========================================================================* 
  */
-extern sqlite3 *pMonsterDb;
 
 /*========================================================================* 
  *  SECTION - Extern global function prototypes                           * 
  *========================================================================* 
  */
-void gvCliDC_DatabaseOpen();
-void gvCliDC_DatabaseClose();
-void gvCliDC_Lookup_Cr();
-void gvCliDC_Lookup_Hp(int hp);
-int gvCliDC_Lookup_Name(char *name);
-int giCliDC_Lookup_PlayerAc(char *Name);
-int giCliDC_Lookup_PlayerHp(char *Name);
+int giCliDC_Add_NewPlayer(char *Name, int16_t Ac, int16_t Hp);
 
-#endif /* lookup.h */
+#endif /* add.h */
