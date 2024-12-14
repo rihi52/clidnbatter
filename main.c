@@ -31,7 +31,7 @@ int main (void)
         switch (choice[0])
         {
             case 'l':
-                gvCliDC_Lookup_Cr();
+                gvCliDC_Lookup_Main();
                 break;
 
             case 'c':

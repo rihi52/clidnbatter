@@ -17,11 +17,13 @@ extern sqlite3 *pMonsterDb;
  *  SECTION - Extern global function prototypes                           * 
  *========================================================================* 
  */
+void gvCliDC_Lookup_Main();
 void gvCliDC_DatabaseOpen();
 void gvCliDC_DatabaseClose();
-void gvCliDC_Lookup_Cr();
+void gvCliDC_Lookup_MonsterCr();
 void gvCliDC_Lookup_Hp(int hp);
-int gvCliDC_Lookup_Name(char *name);
+void gvCliDC_Lookup_MonsterName();
+int gvCliDC_Lookup_Name();
 int giCliDC_Lookup_PlayerAc(char *Name);
 int giCliDC_Lookup_PlayerHp(char *Name);
 
