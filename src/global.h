@@ -1,19 +1,23 @@
-#ifndef ADD_H
-#define ADD_H
+#ifndef GLOBAL_H
+#define GLOBAL_H
 
 #include "sqlite3.h"
-#include <stdint.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 
 /*========================================================================* 
  *  SECTION - Global definitions 
  *========================================================================* 
  */
+extern sqlite3 *pMonsterDb;
 
 /*========================================================================* 
  *  SECTION - Extern global function prototypes                           * 
  *========================================================================* 
  */
-int giCliDC_Add_NewPlayer(char *Name, int16_t Ac, int16_t Hp);
+void gvCliDC_Combat_CheckIntegerInputs(int *numberOf);
+int giCliDC_Global_GetInput(char *Buffer);
 
-#endif /* add.h */
+#endif /* gloabl.h */

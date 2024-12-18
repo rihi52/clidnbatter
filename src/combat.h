@@ -2,7 +2,8 @@
 #define COMBAT_H
 
 #include "lookup.h"
-#include "add.h"
+#include "modify.h"
+#include "global.h"
 #include "sqlite3.h"
 #include <stdbool.h>
 #include <stdio.h>

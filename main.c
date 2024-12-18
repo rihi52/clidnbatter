@@ -7,17 +7,17 @@ int main (void)
     gvCliDC_DatabaseOpen();
     char choice[5];
     int loop = 1;
-    printf("Welcome to clidnbatter!\n\n");
+    printf("Welcome to clidnbatter!\n");
 
     while (loop == 1)
     {
         int check = 1;
-        printf("Home Options:\n");
-        printf("l: lookup a monster(s)\nc: enter combat\na: add a player stat block\nx: exit program\nPlease choose from the above: ");
+        printf("\nHome Options:\n");
+        printf("l: lookup a monster(s)\nc: enter combat\nm: modify player database\nx: exit program\nPlease choose from the above: ");
         while (check == 1)
         {
             fgets(choice, sizeof(choice), stdin);
-            if (isalpha(choice[0]) && (choice[0] == 'l' || choice[0] == 'c' || choice[0] == 'a' || choice[0] == 'x'))
+            if (isalpha(choice[0]) && (choice[0] == 'l' || choice[0] == 'c' || choice[0] == 'm' || choice[0] == 'x'))
             {
                 check = 0;
                 break;
@@ -38,8 +38,8 @@ int main (void)
                 gvCliDC_Combat_Main();
                 break;
 
-            case 'a':
-
+            case 'm':
+                gvCliDC_Modify_MainLoop();
                 break;
             
             case 'x':

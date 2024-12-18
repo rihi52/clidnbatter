@@ -43,7 +43,7 @@ void vCliDC_Lookup_MonsterCr()
     printf("\n*** CR Lookup ***");
     while (1)
     {
-        printf("\nPlease enter CR of desired monster: ");
+        printf("\nPlease enter CR of desired monster (eg: 1/2): ");
         int input = iCliDC_Lookup_GetInput(buffer);
         if (input == 1)
         {
@@ -282,7 +282,7 @@ int giCliDC_Lookup_PlayerAc(char *Name)
     int rc, ac;
     sqlite3_stmt *stmt = NULL;
 
-    const char *sql = "SELECT ac FROM players WHERE name = ?";
+    const char *sql = "SELECT ac FROM players WHERE name IS ? COLLATE NOCASE";
 
     rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
     if (rc != SQLITE_OK)
@@ -318,7 +318,7 @@ int giCliDC_Lookup_PlayerHp(char *Name)
     int rc, hp;
     sqlite3_stmt *stmt = NULL;
 
-    const char *sql = "SELECT hp FROM players WHERE name = ?";
+    const char *sql = "SELECT hp FROM players WHERE name IS ? COLLATE NOCASE";
 
     rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
     if (rc != SQLITE_OK)
