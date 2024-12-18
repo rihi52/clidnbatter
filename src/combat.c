@@ -1,8 +1,8 @@
 #include "combat.h"
 
-/*========================================================================* 
- *  SECTION - Local function prototypes                                   * 
- *========================================================================* 
+/*========================================================================*
+ *  SECTION - Local function prototypes                                   *
+ *========================================================================*
  */
 static void vCliDC_Combat_MainLoop();
 static void vCliDC_Combat_PlayerSetUp();
@@ -20,9 +20,9 @@ static void vCliDC_Combat_IncrementTurn();
 static void vCliDC_Combat_DealDamage(int init, int count, int amount);
 static void vCliDC_Combat_FreeCombatants();
 
-/*========================================================================* 
- *  SECTION - Local variables                                             * 
- *========================================================================* 
+/*========================================================================*
+ *  SECTION - Local variables                                             *
+ *========================================================================*
  */
 #define CHARACTER_BUFFER    250
 #define MONSTER_BUFFER      350
@@ -39,9 +39,9 @@ static int CurrentInitiative = 0;
 static int PrintCounter = -1;
 part *combatants[INITIATIVE_SPREAD];
 
- /*=======================================================================* 
- *  SECTION - Local function definitions                                  * 
- *========================================================================* 
+ /*=======================================================================*
+ *  SECTION - Local function definitions                                  *
+ *========================================================================*
  */
 
 static void vCliDC_Combat_PlayerSetUp()
@@ -49,8 +49,8 @@ static void vCliDC_Combat_PlayerSetUp()
     char prompt[10];
 
     printf("*** Player Set Up ***\n\n");
-    
-    do 
+
+    do /* Keep asking if 'y' for yes or 'n' for no isn't entered */
     {
         printf("Do you wish to add any new players to the database? (y/n): ");
         fgets(prompt, sizeof(prompt), stdin);
@@ -76,11 +76,11 @@ static int CliDC_Combat_ChoosePlayers()
             continue;
         }
         else if (players[0] == 'x' && players[1] == '\n')
-        {
+        {   /* Return to home menu if 'x' entered */
             return 6;
         }
         else
-        {
+        {   /* Break out of loop if valid input */
             break;
         }
     }
@@ -89,11 +89,14 @@ static int CliDC_Combat_ChoosePlayers()
 
 static part *vCliDC_Combat_CreatePlayer(char *name)
 {
+    /* Create new player node */
     part *new = malloc(sizeof(part));
     if (NULL == new){
         printf("New node creation failed\n");
         return NULL;
     }
+
+    /* Lookup and assign values to the player node */
     new->name = strdup(name);
     new->ac = giCliDC_Lookup_PlayerAc(name);
     if ( new->ac == 0)
@@ -129,36 +132,21 @@ static int CliDC_Combat_ChooseMonstsers()
             continue;
         }
         else if (monsters[0] == 'x' && monsters[1] == '\n')
-        {
+        {   /* Return to home menu if 'x' entered */
             return 6;
         }
         else
-        {
+        {   /* Break out of loop if valid input */
             break;
         }
     }
 
-    int length = strlen(monsters);
-    for (int i = 0; i < length; i++)
-    {
-        if (monsters[i] != ' ' && monsters[i] != ',' && monsters[i] != '\n' && 0 != i)
-        {
-            monsters[i] = tolower(monsters[i]);
-        }
-        if (',' == monsters[i - 1] || 0 == i)
-        {
-            monsters[i] = toupper(monsters[i]);
-        }
-        else if (' ' == monsters[i - 1])
-        {
-            monsters[i] = toupper(monsters[i]);
-        }
-    }
     return 0;
 }
 
 part *vCliDC_Combat_CreateMonster(char *name)
 {
+    /* Create new node for new monster */
     part *new = malloc(sizeof(part));
     if (NULL == new){
         printf("New node creation failed\n");
@@ -168,6 +156,7 @@ part *vCliDC_Combat_CreateMonster(char *name)
     int rc;
     sqlite3_stmt *stmt = NULL;
 
+    /* Lookup and assign ac and hp values from database */
     const char *sql = "SELECT name, ac, hp FROM monsters WHERE name IS ? COLLATE NOCASE";
 
     rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
@@ -195,7 +184,7 @@ part *vCliDC_Combat_CreateMonster(char *name)
         return NULL;
     }
 
-    /* Assign player attributes to new part struct */
+    /* Assign monster attributes to the newly created node */
     new->name = strdup((const char *)sqlite3_column_text(stmt, 0));
     if (new->name == NULL) {
         fprintf(stderr, "Memory allocation failed for name\n");
@@ -218,7 +207,9 @@ part *vCliDC_Combat_CreateMonster(char *name)
 
 static void vCliDC_Combat_SetInitiative(struct part *person)
 {
+    /* Initiative instructions with extra spacing for clarity */
     printf("\n** Initiative must be between 0 and 29, inclusive **\n\n");
+
     int check = 1;
     char buffer[10];
     char *endptr;
@@ -227,15 +218,18 @@ static void vCliDC_Combat_SetInitiative(struct part *person)
         printf("%s's initiative: ", person->name);
         fgets(buffer, sizeof(buffer), stdin);
 
+        /* Convert input to number and assign to struct */
         person->initiative = strtol(buffer, &endptr, 10);
         if (endptr == buffer || (*endptr != '\0' && *endptr != '\n'))
         {
+            /* Check input is within given bounds and is a number */
             printf("Error: initiative is out of bounds\n");
             continue;
         }
 
         if (INITIATIVE_SPREAD > person->initiative && 0 <= person->initiative)
         {
+            /* Break out of loop if input is in bounds */
             check = 0;
         }
         else
@@ -267,7 +261,9 @@ static void vCliDC_Combat_AddToInitiativeOrder(part *pAddition)
 {
     if (NULL == pAddition)
     {
+        /* Return if given node is NULL */
         printf("Addition to initiative order is NULL\n");
+        return;
     }
     /* Used to cycle through additions */
     part *temp = NULL;
@@ -293,7 +289,7 @@ static void vCliDC_Combat_PrintInitiativeOrder()
     printf("\n****** Intiative Order Start ******\n\n");
 
     part *temp = NULL;
-    
+
     printf("---------------------------------------------\n");
     printf("| Init | Spot |       Name      | AC |  HP  |\n");
     printf("---------------------------------------------\n");
@@ -304,12 +300,13 @@ static void vCliDC_Combat_PrintInitiativeOrder()
         temp = combatants[i];
         while(temp != NULL)
         {
-            if (0 < temp->hp)
+            /* Cycle through initiative array and print out any nodes with hp left */
+            if (0 <= temp->hp)
             {
                 printf("| %4d | %4d | %-15s | %2d | %4d |\n", temp->initiative, count, temp->name, temp->ac, temp->hp);
             }
             temp->initiativeSpot = count;
-            count++;     
+            count++;
             temp = temp->next;
         }
         temp = NULL;
@@ -322,18 +319,21 @@ static void vCliDC_Combat_PrintInitiativeOrder()
 }
 
 static void vCliDC_Combat_PrintCurrentTurn()
-{    
+{
+    /* Prints the current Initiative turn */
     printf("Initiative Turn: %d\n\n", CurrentInitiative);
 }
 
 static void vCliDC_Combat_IncrementTurn()
 {
+    /* Increments the variable used to determine which initiative turn is used */
     if (0 != UsedInitiative[PrintCounter])
     {
         CurrentInitiative = UsedInitiative[PrintCounter];
     }
     else
     {
+        /* Resets to the top of initiative when 0 is reached in the UsedInitiative array, meaning the bottom of initiative has been reached */
         PrintCounter = 0;
         CurrentInitiative = UsedInitiative[PrintCounter];
     }
@@ -348,16 +348,19 @@ static void vCliDC_Combat_MainLoop()
 
     while (combat == true)
     {
-        printf("printcounter start main loop: %d\n", PrintCounter);
-        
         vCliDC_Combat_PrintCurrentTurn();
         int check = 1;
         damInit = 0;
         damaged = 0;
         damAmount = 0;
         bool confirmed = false;
-        printf("Combat Options:\n'd' for damage\n'n' for next turn\n'x' for end combat\n"); 
+        printf( "Combat Options:\n"
+                "d: Deal damage\n"
+                "n: Proceed to next turn\n"
+                "x: End combat\n" );
         printf("What happens: ");
+
+        /* Loop to ensure only one of the provided options can be selected */
         while (check == 1)
         {
             fgets(event, sizeof(event), stdin);
@@ -369,17 +372,21 @@ static void vCliDC_Combat_MainLoop()
             else
             {
                 printf("Error: choice must be a letter from the list provided.\n");
-            }            
+            }
         }
+
+        /* Combat options */
         switch (event[0])
         {
-            case 'd':
+            case 'd': /* Deal damage */
                 while (!confirmed)
                 {
+                    /* Receive input for which battle participant is to take damage */
                     printf("Which initiative count takes damage (enter initiative): ");
                     gvCliDC_Combat_CheckIntegerInputs(&damInit);
                     if (NULL != combatants[damInit] && INITIATIVE_SPREAD > damInit && 0 < damInit)
                     {
+                        /* Ensures input is within bounds */
                         confirmed = true;
                         break;
                     }
@@ -389,11 +396,14 @@ static void vCliDC_Combat_MainLoop()
 
                 while (!confirmed)
                 {
+                    /* Recieves input on which battle participant on the before given initiative count is to receive damage in case there are multiple */
                     printf("Which creature on %d initiative (enter number from Spot column): ", damInit);
                     gvCliDC_Combat_CheckIntegerInputs(&damaged);
                     temp = combatants[damInit];
+                    /* NULL check */
                     if (NULL != temp)
                     {
+                        /* Loop through to get to the correct initiative and initiative spot */
                         while (temp->initiativeSpot != damaged)
                         {
                             if (NULL == temp->next && temp->initiativeSpot != damaged)
@@ -413,6 +423,7 @@ static void vCliDC_Combat_MainLoop()
                             }
                             else if (damaged == temp->initiativeSpot)
                             {
+                                /* Found the correct spot and it is valid */
                                 confirmed = true;
                                 break;
                             }
@@ -421,7 +432,7 @@ static void vCliDC_Combat_MainLoop()
 
                             }
 
-                            temp = temp->next;                    
+                            temp = temp->next;
                         }
                         if (temp->initiativeSpot == damaged)
                         {
@@ -439,25 +450,29 @@ static void vCliDC_Combat_MainLoop()
                 gvCliDC_Combat_CheckIntegerInputs(&damAmount);
 
                 vCliDC_Combat_DealDamage(damInit, damaged, damAmount);
-                
+
                 vCliDC_Combat_PrintInitiativeOrder();
                 break;
-            case 'x':
+
+            case 'x': /* End combat */
                 printf("\n********** Combat Over **********\n\n");
                 combat = false;
                 break;
 
-            case 'n':
-                printf("Next Turn\n");
+            case 'n': /* Next Turn */
+                printf("\nNext Turn\n");
                 vCliDC_Combat_PrintInitiativeOrder();
                 PrintCounter++;
                 vCliDC_Combat_IncrementTurn();
                 break;
 
             default:
-                printf("Invalid Choice:\n'd' for damage\n'n' for next turn\n'x' for end combat\n");
+                printf( "Invalid Choice:\n"
+                        "d: Deal damage\n"
+                        "n: Proceed to next turn\n"
+                        "x: End combat\n" );
                 break;
-        } 
+        }
     }
 }
 
@@ -473,64 +488,25 @@ static void vCliDC_Combat_DealDamage(int init, int count, int amount)
             temp = temp->next;
         }
         /* remove hp */
-        temp->hp = temp->hp - amount;
+        if (0 < temp->hp && 0 < (temp->hp - amount))
+        {
+            temp->hp = temp->hp - amount;
+        }
+        else if(0 < temp->hp &&  0 >= (temp->hp - amount))
+        {
+            temp->hp = 0;
+        }
     }
     return;
 }
 
-void gvCliDC_Combat_LookupMonster()
-{
-    char buffer[10];
-    char *endptr;
-    int userCR, rc;
-    sqlite3_stmt *stmt = NULL;
-
-    printf("CR Lookup: ");
-    if(fgets(buffer, sizeof(buffer), stdin) != NULL)
-    {
-        userCR = strtol(buffer, &endptr, 10);
-    }
-    //scanf("%d", &userCR);
-
-    const char *sql = "SELECT id, name, type, cr, hp FROM monsters WHERE cr = ?";
-
-    rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
-    if (rc != SQLITE_OK)
-    {
-        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
-        return;
-    }
-
-    sqlite3_bind_int(stmt, 1, userCR);
-
-    printf("ID  | Name                      |         Type         | CR | HP\n");
-    printf("---------------------------------------------------------------------\n");
-
-    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
-    {
-        int id = sqlite3_column_int(stmt, 0);         // First column: ID
-        const char *name = (const char *)sqlite3_column_text(stmt, 1); // Second column: Name
-        const char *type = (const char *)sqlite3_column_text(stmt, 2);
-        int cr = sqlite3_column_int(stmt, 3);        // Fourth column: CR
-        int hp = sqlite3_column_int(stmt, 4);        // Third column: HP
-        
-
-        printf("%-3d | %-25s | %-20s | %-2d | %-3d\n", id, name, type, cr, hp);
-    }
-
-    if (rc != SQLITE_DONE) {
-        fprintf(stderr, "Error during iteration: %s\n", sqlite3_errmsg(pMonsterDb));
-    }
-
-    sqlite3_finalize(stmt);
-}
-
 static void vCliDC_Combat_FreeCombatants()
 {
+    /* Free all malloc'd memory */
     for (int i = 0; i < INITIATIVE_SPREAD; i++)
     {
         if (NULL != combatants[i])
-        {            
+        {
             part *current = combatants[i];
             part *temp;
 
@@ -545,9 +521,9 @@ static void vCliDC_Combat_FreeCombatants()
     }
 }
 
-/*========================================================================* 
- *  SECTION - Global function definitions                                 * 
- *========================================================================* 
+/*========================================================================*
+ *  SECTION - Global function definitions                                 *
+ *========================================================================*
  */
 void gvCliDC_Combat_Main(void)
 {
@@ -557,11 +533,11 @@ void gvCliDC_Combat_Main(void)
 
     printf("\n**** Begin acquiring player character information ****\n\n");
 
-    char namePlayers[CHARACTER_BUFFER];    
+    char namePlayers[CHARACTER_BUFFER];
     char endchar = ' ';
     int length, startPosition = 0, loop = 0;
     part *newPlayer = NULL;
-    /* Loop to acquire player information 
+    /* Loop to acquire player information
      * Two loop statuses so the user input functions can be returned to if needed */
     while (0 == loop || 1 == loop)
     {
@@ -576,7 +552,7 @@ void gvCliDC_Combat_Main(void)
             }
             length = strlen(players);
             loop = 1;
-        }        
+        }
 
         memset(namePlayers, '\0', sizeof(namePlayers));
         int nameIndex = 0;
@@ -589,7 +565,7 @@ void gvCliDC_Combat_Main(void)
                 {
                     namePlayers[nameIndex] = players[i];
                     nameIndex++;
-                }                
+                }
             }
             else
             {
@@ -611,7 +587,7 @@ void gvCliDC_Combat_Main(void)
             loop = 2;
             break;
         }
-        
+
         if (newPlayer == NULL)
         {
             printf("Please re-enter players' names or enter 'x' to return to home\n\n");
@@ -632,9 +608,9 @@ void gvCliDC_Combat_Main(void)
     while (0 != CliDC_Combat_ChooseMonstsers())
     {
         CliDC_Combat_ChooseMonstsers();
-    }    
+    }
 
-    char nameMonsters[MONSTER_BUFFER];    
+    char nameMonsters[MONSTER_BUFFER];
     endchar = ' ';
     length = strlen(monsters);
     startPosition = 0;
@@ -651,7 +627,7 @@ void gvCliDC_Combat_Main(void)
                 {
                     nameMonsters[nameIndex] = monsters[i];
                     nameIndex++;
-                }                
+                }
             }
             else
             {
@@ -683,19 +659,19 @@ void gvCliDC_Combat_Main(void)
             {
                 tail->next = newMonster;
             }
-            
+
             tail = newMonster;
-            
+
             newMonster = newMonster->next;
         }
-        
+
         vCliDC_Combat_SetInitiative(head);
         if (endchar == '\n')
         {
             break;
         }
     }
-    
+
     printf("\n**** End acquiring enemy information ****\n\n");
 
     vCliDC_Combat_PrintInitiativeOrder();
