@@ -24,7 +24,7 @@ A command line tool used to run combat scenarios, designed for 5th edition.
 - Monsters can be searched and displayed by any of the above stats
 - Custom monsters can be imported to the db via sqlite or using the cli interface of the program itself
 
-## Screenshots
+## Screenshots (Out of Date)
 
 ### Combat Tracking
 
