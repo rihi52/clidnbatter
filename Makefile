@@ -7,9 +7,10 @@ LDFLAGS = -lsqlite3
 SRCDIR = src
 OBJDIR = obj
 BINDIR = bin
+PROJECT_DIR = $(shell pwd)
 
 # Files
-SOURCES = main.c $(SRCDIR)/combat.c $(SRCDIR)/lookup.c $(SRCDIR)/add.c 
+SOURCES = main.c $(SRCDIR)/combat.c $(SRCDIR)/lookup.c $(SRCDIR)/modify.c $(SRCDIR)/global.c 
 OBJECTS = $(SOURCES:%.c=$(OBJDIR)/%.o)
 EXECUTABLE = $(BINDIR)/clidnbatter
 

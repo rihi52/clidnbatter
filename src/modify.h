@@ -1,12 +1,11 @@
-#ifndef LOOKUP_H
-#define LOOKUP_H
+#ifndef MODIFY_H
+#define MODIFY_H
 
-#include "combat.h"
 #include "sqlite3.h"
+#include "lookup.h"
 #include "global.h"
-#include <ctype.h>
-#include <stdlib.h>
-#include <string.h>
+#include <stdint.h>
+#include <stdio.h>
 
 /*========================================================================* 
  *  SECTION - Global definitions 
@@ -17,10 +16,8 @@
  *  SECTION - Extern global function prototypes                           * 
  *========================================================================* 
  */
-void gvCliDC_Lookup_Main();
-void gvCliDC_DatabaseOpen();
-void gvCliDC_DatabaseClose();
-int giCliDC_Lookup_PlayerAc(char *Name);
-int giCliDC_Lookup_PlayerHp(char *Name);
+void gvCliDC_Modify_MainLoop();
+void gvCliDC_Modify_EnterPlayerInformation();
+int giCliDC_Modify_NewPlayer(char *Name, int16_t Ac, int16_t Hp);
 
-#endif /* lookup.h */
+#endif /* modify.h */

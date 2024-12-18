@@ -18,40 +18,18 @@ static void vCliDC_Combat_PrintCurrentTurn();
 static void vCliDC_Combat_IncrementTurn();
 
 static void vCliDC_Combat_DealDamage(int init, int count, int amount);
-static void vCliDC_Combat_CheckIntegerInputs(int *numberOf);
 static void vCliDC_Combat_FreeCombatants();
 
 /*========================================================================* 
  *  SECTION - Local variables                                             * 
  *========================================================================* 
  */
-
 #define CHARACTER_BUFFER    250
 #define MONSTER_BUFFER      350
 
 /***** Combatants *****/
 char players[CHARACTER_BUFFER];
 char monsters[MONSTER_BUFFER];
-/* To add more enemies, create a new part struct and point orc to it*/
-
-/* Orc Enemies */
-part orc = {"Orc", false, 0, 0, 0, 13, 15, false, NULL};
-
-/* Orog Enemies */
-part orog = {"Orog", false, 0, 0, 0, 18, 53, false, NULL};
-
-/* Magmin Enemies */
-part magmin = {"Magmin", false, 0, 0, 0, 15, 9, false, NULL};
-
-/* Linked list of unique part stats */
-part ildmane = {"ildmane", true, 0, 0, 0, 18, 162, false, NULL};
-part okssort = {"okssort", true, 0, 0, 0, 17, 162, false, NULL};
-
-/* Linked list of player stats */
-part theon = {"theon", true, 0, 0, 0,16, 55, false, NULL};
-part pax = {"pax", true, 0, 0, 0, 16, 57, false, NULL};
-part finn = {"finn", true, 0, 0, 0, 15, 36, false, NULL};
-part ravi = {"ravi", true, 0, 0, 0, 16, 34, false, NULL};
 
 //static int currentInit = 0;
 static int numCombatants = 1;
@@ -74,7 +52,7 @@ static void vCliDC_Combat_PlayerSetUp()
     
     do 
     {
-        printf("Do you wish to add any new players? (y/n): ");
+        printf("Do you wish to add any new players to the database? (y/n): ");
         fgets(prompt, sizeof(prompt), stdin);
     } while (strlen(prompt) != 1 && ('y' != prompt[0] && 'n' != prompt[0]));
 
@@ -83,39 +61,7 @@ static void vCliDC_Combat_PlayerSetUp()
         return;
     }
 
-    char name[50];
-    int Ac, Hp;    
-    
-    while (1)
-    {
-        printf("New Player name: ");
-        fgets(name, sizeof(name), stdin);
-        if (name[0] != '\n' && name[0] != ' ')
-        {
-            name[strcspn(name, "\n")] = '\0';
-        }
-        else
-        {
-            printf("Error: blank input. Starting over.\n");
-            continue;
-        }
-
-        name[strcspn(name, "\n")] = '\0';
-
-        printf("New Player armor class: ");
-        vCliDC_Combat_CheckIntegerInputs(&Ac);
-
-        printf("New Player hit point maximum: ");
-        vCliDC_Combat_CheckIntegerInputs(&Hp);
-        break;
-    }
-
-    if (0 != giCliDC_Add_NewPlayer(name, Ac, Hp))
-    {
-        printf("Error accessing database.\n");
-        return;
-    }
-    
+    gvCliDC_Modify_EnterPlayerInformation();
 }
 
 static int CliDC_Combat_ChoosePlayers()
@@ -136,15 +82,6 @@ static int CliDC_Combat_ChoosePlayers()
         else
         {
             break;
-        }
-    }
-
-    int length = strlen(players);
-    for (int i = 0; i < length; i++)
-    {
-        if (players[i] != ' ' && players[i] != ',' && players[i] != '\n')
-        {
-            players[i] = tolower(players[i]);
         }
     }
     return 0;
@@ -184,7 +121,7 @@ static int CliDC_Combat_ChooseMonstsers()
 {
     while (1)
     {
-        printf("\nPlease enter desired monsters from db separated only by commas (eg. orc,orog,magmin): ");
+        printf("\nPlease enter desired monsters from db separated only by commas (eg. orc,animated armor,magmin): ");
         fgets(monsters, sizeof(monsters), stdin);
         if (monsters[0] == '\n' && monsters[0] == ' ')
         {
@@ -231,7 +168,7 @@ part *vCliDC_Combat_CreateMonster(char *name)
     int rc;
     sqlite3_stmt *stmt = NULL;
 
-    const char *sql = "SELECT name, ac, hp FROM monsters WHERE name = ?";
+    const char *sql = "SELECT name, ac, hp FROM monsters WHERE name IS ? COLLATE NOCASE";
 
     rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
     if (rc != SQLITE_OK)
@@ -252,7 +189,7 @@ part *vCliDC_Combat_CreateMonster(char *name)
 
     if (sqlite3_step(stmt) != SQLITE_ROW)
     {
-        fprintf(stderr, "Player with name '%s' not found in database\n", name);
+        fprintf(stderr, "Monster with name '%s' not found in database\n", name);
         sqlite3_finalize(stmt);
         free(new);
         return NULL;
@@ -351,34 +288,6 @@ static void vCliDC_Combat_AddToInitiativeOrder(part *pAddition)
     }
 }
 
-static void vCliDC_Combat_CheckIntegerInputs(int *numberOf)
-{
-    int check = 1;
-    char buffer[10];
-    char *endptr;
-    while (check == 1)
-    {
-        fgets(buffer, sizeof(buffer), stdin);
-
-        *numberOf = strtol(buffer, &endptr, 10);
-        if (endptr == buffer || (*endptr != '\0' && *endptr != '\n'))
-        {
-            printf("Error - must be a positive integer: ");
-            continue;
-        }
-
-        if (0 <= *numberOf)
-        {
-            check = 0;
-        }
-        else
-        {
-            printf("Error - must be a positive integer: \n");
-            continue;
-        }
-    }
-}
-
 static void vCliDC_Combat_PrintInitiativeOrder()
 {
     printf("\n****** Intiative Order Start ******\n\n");
@@ -409,7 +318,6 @@ static void vCliDC_Combat_PrintInitiativeOrder()
 
     printf("\n****** Intiative Order End ******\n\n");
 
-    PrintCounter++;
     return;
 }
 
@@ -440,6 +348,7 @@ static void vCliDC_Combat_MainLoop()
 
     while (combat == true)
     {
+        printf("printcounter start main loop: %d\n", PrintCounter);
         
         vCliDC_Combat_PrintCurrentTurn();
         int check = 1;
@@ -468,8 +377,8 @@ static void vCliDC_Combat_MainLoop()
                 while (!confirmed)
                 {
                     printf("Which initiative count takes damage (enter initiative): ");
-                    vCliDC_Combat_CheckIntegerInputs(&damInit);
-                    if (NULL != combatants[damInit])
+                    gvCliDC_Combat_CheckIntegerInputs(&damInit);
+                    if (NULL != combatants[damInit] && INITIATIVE_SPREAD > damInit && 0 < damInit)
                     {
                         confirmed = true;
                         break;
@@ -480,8 +389,8 @@ static void vCliDC_Combat_MainLoop()
 
                 while (!confirmed)
                 {
-                    printf("Which creature on %d initiative: ", damInit);
-                    vCliDC_Combat_CheckIntegerInputs(&damaged);
+                    printf("Which creature on %d initiative (enter number from Spot column): ", damInit);
+                    gvCliDC_Combat_CheckIntegerInputs(&damaged);
                     temp = combatants[damInit];
                     if (NULL != temp)
                     {
@@ -527,7 +436,7 @@ static void vCliDC_Combat_MainLoop()
                 }
 
                 printf("How much damage: ");
-                vCliDC_Combat_CheckIntegerInputs(&damAmount);
+                gvCliDC_Combat_CheckIntegerInputs(&damAmount);
 
                 vCliDC_Combat_DealDamage(damInit, damaged, damAmount);
                 
@@ -541,6 +450,7 @@ static void vCliDC_Combat_MainLoop()
             case 'n':
                 printf("Next Turn\n");
                 vCliDC_Combat_PrintInitiativeOrder();
+                PrintCounter++;
                 vCliDC_Combat_IncrementTurn();
                 break;
 
@@ -645,7 +555,7 @@ void gvCliDC_Combat_Main(void)
         combatants[i] = NULL;
     }
 
-    printf("\n**** Begin acquiring player character information ****\n");
+    printf("\n**** Begin acquiring player character information ****\n\n");
 
     char namePlayers[CHARACTER_BUFFER];    
     char endchar = ' ';
@@ -753,7 +663,7 @@ void gvCliDC_Combat_Main(void)
         nameMonsters[nameIndex] = '\0';
         printf("How many %s: ", nameMonsters);
         int num;
-        vCliDC_Combat_CheckIntegerInputs(&num);
+        gvCliDC_Combat_CheckIntegerInputs(&num);
         part *head = NULL;
         part *tail = NULL;
         for (int i = 0; i < num; i++)
@@ -814,6 +724,7 @@ void gvCliDC_Combat_Main(void)
     vCliDC_Combat_MainLoop();
 
     /* Free mallocs */
-    vCliDC_Combat_FreeCombatants();    
+    vCliDC_Combat_FreeCombatants();
+    PrintCounter = -1;
     return;
 }
