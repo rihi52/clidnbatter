@@ -2,21 +2,21 @@
 
 
 
-/*========================================================================* 
- *  SECTION - Local definitions 
- *========================================================================* 
+/*========================================================================*
+ *  SECTION - Local definitions
+ *========================================================================*
  */
 #define CHARACTER_BUFFER_BYTE   100
 #define SMALL_BUFFER_BYTE       10
 
-/*========================================================================* 
- *  SECTION - External variables that cannot be defined in header files   * 
+/*========================================================================*
+ *  SECTION - External variables that cannot be defined in header files   *
  *========================================================================*
  */
 
-/*========================================================================* 
- *  SECTION - Local function prototypes                                   * 
- *========================================================================* 
+/*========================================================================*
+ *  SECTION - Local function prototypes                                   *
+ *========================================================================*
  */
 void vCliDC_Lookup_MonsterName();
 void vCliDC_Lookup_MonsterCr();
@@ -25,15 +25,67 @@ int iCliDC_Lookup_GetInput(char *buffer);
 sqlite3_stmt *CliDC_Lookup_PrepareAndBind(const char *sql, const char *BindValue);
 void vCliDC_Lookup_PrintDbContents(sqlite3_stmt *stmt, char *buffer);
 
-/*========================================================================* 
- *  SECTION - Local variables                                             * 
- *========================================================================* 
+/*========================================================================*
+ *  SECTION - Local variables                                             *
+ *========================================================================*
  */
 
- /*=======================================================================* 
- *  SECTION - Local function definitions                                  * 
- *========================================================================* 
+ /*=======================================================================*
+ *  SECTION - Local function definitions                                  *
+ *========================================================================*
  */
+void vCliDC_Lookup_AllPlayers()
+{
+    char buffer[SMALL_BUFFER_BYTE];
+    memset(buffer, '\0', sizeof(buffer));
+    sqlite3_stmt *stmt = NULL;
+
+    printf("\n*** All Players Lookup ***\n");
+
+    const char *sql = "SELECT * FROM players";
+
+    int rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_close(pMonsterDb);
+        return;
+    }
+
+    /* Print table header */
+    printf("-------------------------------------------------\n");
+    printf("| ID | Name                           | AC | HP |\n");
+    printf("-------------------------------------------------\n");
+
+    int found = 0;
+    /* Print columns from database as rows in table */
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+    {
+        found = 1;
+        int id = sqlite3_column_int(stmt, 0);
+        const char *name = (const char *)sqlite3_column_text(stmt, 1);
+        int ac = sqlite3_column_int(stmt, 2);
+        int hp = sqlite3_column_int(stmt, 3);
+
+        printf("|%-3d | %-30s | %-3d| %-2d |\n", id, name, hp, ac);
+    }
+
+    if (!found)
+    {
+        printf("No players found.\n");
+    }
+
+    /* End table */
+    printf("-------------------------------------------------\n");
+
+    if (rc != SQLITE_DONE) {
+        fprintf(stderr, "Error during iteration: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_close(pMonsterDb);
+    }
+
+    sqlite3_finalize(stmt);
+}
+
 void vCliDC_Lookup_MonsterCr()
 {
     char buffer[SMALL_BUFFER_BYTE];
@@ -110,7 +162,7 @@ void vCliDC_Lookup_MonsterType()
     char types[CHARACTER_BUFFER_BYTE];
     memset(types, '\0', sizeof(types));
     sqlite3_stmt *stmt = NULL;
-    
+
     printf("\n*** Type lookup ***");
     while (1)
     {
@@ -197,6 +249,7 @@ int iCliDC_Lookup_GetInput(char *buffer)
 
 sqlite3_stmt *CliDC_Lookup_PrepareAndBind(const char *sql, const char *BindValue)
 {
+    /* Chatgpt used to learn this SQLite API */
     sqlite3_stmt *stmt = NULL;
     int rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
     if (rc != SQLITE_OK)
@@ -221,11 +274,14 @@ void vCliDC_Lookup_PrintDbContents(sqlite3_stmt *stmt, char *buffer)
 {
     int rc;
 
+    /* Print table header */
     printf("--------------------------------------------------------------------------------------\n");
     printf("| ID | Name                      |               Type               |  CR  | HP | AC |\n");
     printf("--------------------------------------------------------------------------------------\n");
 
     int found = 0;
+    /* Chatgpt used to learn how to do this step with SQLite API */
+    /* Print columns from database as rows in table */
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
     {
         found = 1;
@@ -244,6 +300,7 @@ void vCliDC_Lookup_PrintDbContents(sqlite3_stmt *stmt, char *buffer)
         printf("No monsters found with CR = %s.\n", buffer);
     }
 
+    /* End table */
     printf("--------------------------------------------------------------------------------------\n");
 
     if (rc != SQLITE_DONE) {
@@ -252,18 +309,19 @@ void vCliDC_Lookup_PrintDbContents(sqlite3_stmt *stmt, char *buffer)
     }
 }
 
-/*========================================================================* 
- *  SECTION - Global function definitions                                 * 
- *========================================================================* 
+/*========================================================================*
+ *  SECTION - Global function definitions                                 *
+ *========================================================================*
  */
 void gvCliDC_DatabaseOpen()
 {
-    
+
     int rc = sqlite3_open("monsters.db", &pMonsterDb);
     if (rc)
     {
+        /* Exit if the database can't be opened */
         fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(pMonsterDb));
-        return; // Exit if the database can't be opened
+        return;
     }
     else
     {
@@ -279,25 +337,12 @@ void gvCliDC_DatabaseClose()
 
 int giCliDC_Lookup_PlayerAc(char *Name)
 {
-    int rc, ac;
+    int ac;
     sqlite3_stmt *stmt = NULL;
 
     const char *sql = "SELECT ac FROM players WHERE name IS ? COLLATE NOCASE";
 
-    rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
-    if (rc != SQLITE_OK)
-    {
-        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
-        return 0;
-    }
-
-    rc = sqlite3_bind_text(stmt, 1, Name, -1, SQLITE_TRANSIENT);
-    if (rc != SQLITE_OK)
-    {
-        fprintf(stderr, "Failed to bind name: %s\n", sqlite3_errmsg(pMonsterDb));
-        sqlite3_finalize(stmt);
-        return 0;
-    }
+    stmt = CliDC_Lookup_PrepareAndBind(sql, Name);
 
     if (sqlite3_step(stmt) != SQLITE_ROW)
     {
@@ -315,25 +360,12 @@ int giCliDC_Lookup_PlayerAc(char *Name)
 
 int giCliDC_Lookup_PlayerHp(char *Name)
 {
-    int rc, hp;
+    int hp;
     sqlite3_stmt *stmt = NULL;
 
     const char *sql = "SELECT hp FROM players WHERE name IS ? COLLATE NOCASE";
 
-    rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
-    if (rc != SQLITE_OK)
-    {
-        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
-        return 0;
-    }
-
-    rc = sqlite3_bind_text(stmt, 1, Name, -1, SQLITE_TRANSIENT);
-    if (rc != SQLITE_OK)
-    {
-        fprintf(stderr, "Failed to bind name: %s\n", sqlite3_errmsg(pMonsterDb));
-        sqlite3_finalize(stmt);
-        return 0;
-    }
+    stmt = CliDC_Lookup_PrepareAndBind(sql, Name);
 
     if (sqlite3_step(stmt) != SQLITE_ROW)
     {
@@ -354,19 +386,26 @@ void gvCliDC_Lookup_Main()
     int loop = 1;
     while (1 == loop)
     {
+        printf("\n*** Lookup Menu ***\n");
+
+        /* Buffer to contain menu choice, memset to '\0' to ensure no garbage values */
         char choice[SMALL_BUFFER_BYTE];
         memset(choice, '\0', sizeof(choice));
         int check = 1;
+
         printf("\nLookup Options:\n");
-        printf( "c: Lookup a monster(s) by CR\nn: Lookup monster by Name\n"
+        printf( "p: Display all players\n"
+                "c: Lookup a monster(s) by CR\n"
+                "n: Lookup monster by Name\n"                
                 "t: Lookup monster by Type\n"
                 "a: Lookup monster by AC\n"
                 "x: Return to home menu\n"
                 "Please choose from the above: ");
+        /* Loop to ensure only one of the provided options can be selected */
         while (check == 1)
         {
             fgets(choice, sizeof(choice), stdin);
-            if (isalpha(choice[0]) && (choice[0] == 'l' || choice[0] == 'c' || choice[0] == 'n' || choice[0] == 'x' || choice[0] == 't' || choice[0] == 'a'))
+            if (isalpha(choice[0]) && (choice[0] == 'p' || choice[0] == 'c' || choice[0] == 'n' || choice[0] == 'x' || choice[0] == 't' || choice[0] == 'a'))
             {
                 check = 0;
                 break;
@@ -374,11 +413,16 @@ void gvCliDC_Lookup_Main()
             else
             {
                 printf("Error: choice must be a letter from the list provided.\n");
-            }            
+            }
         }
 
+        /* Menu transfer options */
         switch (choice[0])
         {
+            case 'p':
+                vCliDC_Lookup_AllPlayers();
+                break;
+
             case 'c':
                 vCliDC_Lookup_MonsterCr();
                 break;

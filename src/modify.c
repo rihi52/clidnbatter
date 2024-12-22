@@ -1,20 +1,20 @@
 #include "modify.h"
 
 
-/*========================================================================* 
- *  SECTION - Local definitions 
- *========================================================================* 
+/*========================================================================*
+ *  SECTION - Local definitions
+ *========================================================================*
  */
 
-/*========================================================================* 
- *  SECTION - External variables that cannot be defined in header files   * 
+/*========================================================================*
+ *  SECTION - External variables that cannot be defined in header files   *
  *========================================================================*
  */
 sqlite3 *pMonsterDb;
 
-/*========================================================================* 
- *  SECTION - Local function prototypes                                   * 
- *========================================================================* 
+/*========================================================================*
+ *  SECTION - Local function prototypes                                   *
+ *========================================================================*
  */
 static void vCliDC_Modify_DeletePlayer();
 static void vCliDC_Modify_ModifyChoices();
@@ -22,14 +22,14 @@ static void vCliDC_Modify_ChangePlayerName();
 static void vCliDC_Modify_ChangePlayerAC();
 static void vCliDC_Modify_ChangePlayerHP();
 
-/*========================================================================* 
- *  SECTION - Local variables                                             * 
- *========================================================================* 
+/*========================================================================*
+ *  SECTION - Local variables                                             *
+ *========================================================================*
  */
 
- /*=======================================================================* 
- *  SECTION - Local function definitions                                  * 
- *========================================================================* 
+ /*=======================================================================*
+ *  SECTION - Local function definitions                                  *
+ *========================================================================*
  */
 static void vCliDC_Modify_DeletePlayer()
 {
@@ -37,7 +37,8 @@ static void vCliDC_Modify_DeletePlayer()
 
     while (1)
     {
-        printf("Enter name of Player to delete (not case-sensitive): ");
+        printf("\n** Delete Player **\n");
+        printf("\nEnter name of Player to delete (not case-sensitive): ");
         int input = giCliDC_Global_GetInput(Name);
         if (input == 1)
         {
@@ -56,7 +57,7 @@ static void vCliDC_Modify_DeletePlayer()
     char prompt[5];
     printf("This will delete %s from the database permanently.\nAre you sure you want to proceed (y/n): ", Name);
 
-    do 
+    do
     {
         fgets(prompt, sizeof(prompt), stdin);
     } while (strlen(prompt) != 1 && ('y' != prompt[0] && 'n' != prompt[0]));
@@ -96,7 +97,7 @@ static void vCliDC_Modify_DeletePlayer()
     {
         printf("Player %s deleted successfully.\n", Name);
     }
-    
+
     sqlite3_finalize(stmt);
 }
 
@@ -104,13 +105,17 @@ static void vCliDC_Modify_ModifyChoices()
 {
     char choice[5];
     int loop = 1;
-    printf("\n** Modify Player **\n\n");
+    printf("\n** Modify Player **\n");
 
     while (loop == 1)
     {
         int check = 1;
-        printf("Modify Player Options:\n");
-        printf("n: change player name\na: change player AC\nh: change player HP\nx: return home\nPlease choose from the above: ");
+        printf("\nModify Player Options:\n");
+        printf( "n: Change player name\n"
+                "a: Change player AC\n"
+                "h: Change player HP\n"
+                "x: Return to modify database menu\n"
+                "Please choose from the above: " );
         while (check == 1)
         {
             fgets(choice, sizeof(choice), stdin);
@@ -122,7 +127,7 @@ static void vCliDC_Modify_ModifyChoices()
             else
             {
                 printf("Error: choice must be a letter from the list provided.\n");
-            }            
+            }
         }
 
         switch (choice[0])
@@ -137,9 +142,9 @@ static void vCliDC_Modify_ModifyChoices()
 
             case 'h':
                 vCliDC_Modify_ChangePlayerHP();
-                
+
                 break;
-            
+
             case 'x':
                 loop = 0;
                 break;
@@ -230,7 +235,7 @@ static void vCliDC_Modify_ChangePlayerName()
     {
         printf("Player %s name changed to %s successfully.\n\n", Name, NewName);
     }
-    
+
     sqlite3_finalize(stmt);
 
 }
@@ -314,7 +319,7 @@ static void vCliDC_Modify_ChangePlayerAC()
     {
         printf("Player %s AC changed to %s successfully.\n\n", Name, NewAC);
     }
-    
+
     sqlite3_finalize(stmt);
     return;
 }
@@ -398,26 +403,31 @@ static void vCliDC_Modify_ChangePlayerHP()
     {
         printf("Player %s HP changed to %s successfully.\n\n", Name, NewHP);
     }
-    
+
     sqlite3_finalize(stmt);
     return;
 }
 
-/*========================================================================* 
- *  SECTION - Global function definitions                                 * 
- *========================================================================* 
+/*========================================================================*
+ *  SECTION - Global function definitions                                 *
+ *========================================================================*
  */
 void gvCliDC_Modify_MainLoop()
 {
     char choice[5];
     int loop = 1;
-    printf("\n*** Modify Player Database ***\n\n");
+
 
     while (loop == 1)
     {
+        printf("\n*** Modify Player Database ***\n");
         int check = 1;
-        printf("Modify Player Database Options:\n");
-        printf("a: add a player\nr: remove a player\nm: modify a player\nx: return home\nPlease choose from the above: ");
+        printf("\nModify Player Database Options:\n");
+        printf( "a: Add a player\n"
+                "r: Remove a player\n"
+                "m: Modify a player\n"
+                "x: Return to home menu\n"
+                "Please choose from the above: " );
         while (check == 1)
         {
             fgets(choice, sizeof(choice), stdin);
@@ -429,7 +439,7 @@ void gvCliDC_Modify_MainLoop()
             else
             {
                 printf("Error: choice must be a letter from the list provided.\n");
-            }            
+            }
         }
 
         switch (choice[0])
@@ -445,7 +455,7 @@ void gvCliDC_Modify_MainLoop()
             case 'm':
                 vCliDC_Modify_ModifyChoices();
                 break;
-            
+
             case 'x':
                 loop = 0;
                 break;
@@ -460,15 +470,21 @@ void gvCliDC_Modify_MainLoop()
 void gvCliDC_Modify_EnterPlayerInformation()
 {
     char name[50];
-    int Ac, Hp; 
+    int Ac, Hp;
 
     while (1)
     {
         printf("New Player name (50 character maximum): ");
         fgets(name, sizeof(name), stdin);
-        if (name[0] != '\n' && name[0] != ' ')
+        if (name[0] != '\n' && name[0] != ' ' && 2 < strlen(name))
         {
             name[strcspn(name, "\n")] = '\0';
+        }
+        else if ('x' == name[0] && '\n' == name[1])
+        {
+            /* x not allowed as input, always quits or returns to menu */
+            printf("x entered as input. Quiting add new player.\n");
+            return;
         }
         else
         {
@@ -541,7 +557,7 @@ int giCliDC_Modify_NewPlayer(char *Name, int16_t Ac, int16_t Hp)
     {
         printf("New player added successfully.\n");
     }
-    
+
     sqlite3_finalize(stmt);
     return 0;
 }
