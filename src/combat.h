@@ -17,6 +17,7 @@ typedef struct part{
     int initiativeSpot;
     int turnCount;
     int ac;
+    int MaxHp;
     int hp;
     bool isMalloc;
     struct part *next;

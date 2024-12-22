@@ -495,10 +495,10 @@ void gvCliDC_Modify_EnterPlayerInformation()
         name[strcspn(name, "\n")] = '\0';
 
         printf("New Player armor class: ");
-        gvCliDC_Combat_CheckIntegerInputs(&Ac);
+        gvCliDC_Global_CheckIntegerInputs(&Ac);
 
         printf("New Player hit point maximum: ");
-        gvCliDC_Combat_CheckIntegerInputs(&Hp);
+        gvCliDC_Global_CheckIntegerInputs(&Hp);
         break;
     }
 

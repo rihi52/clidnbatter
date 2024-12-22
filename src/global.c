@@ -32,7 +32,7 @@
  *========================================================================*
  */
 
-void gvCliDC_Combat_CheckIntegerInputs(int *numberOf)
+void gvCliDC_Global_CheckIntegerInputs(int *numberOf)
 {
     int check = 1;
     char buffer[10];

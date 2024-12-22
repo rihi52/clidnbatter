@@ -17,7 +17,7 @@ extern sqlite3 *pMonsterDb;
  *  SECTION - Extern global function prototypes                           * 
  *========================================================================* 
  */
-void gvCliDC_Combat_CheckIntegerInputs(int *numberOf);
+void gvCliDC_Global_CheckIntegerInputs(int *numberOf);
 int giCliDC_Global_GetInput(char *Buffer);
 
 #endif /* gloabl.h */
