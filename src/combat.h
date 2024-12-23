@@ -23,8 +23,6 @@ typedef struct part{
     struct part *next;
 }part;
 
-// part enemies[] = {{"Orc", false, 0, 0, 0, 13, 15, NULL}, {"Orog", false, 0, 0, 0, 18, 53, NULL}}; // Test - do I need individually named structs or array of structs?
-
 void gvCliDC_Combat_Main(void);
-
+int CliDC_Combat_ChoosePlayers(char *ChosenPlayers, size_t size);
 #endif  /*combat.h*/

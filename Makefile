@@ -11,7 +11,7 @@ PROJECT_DIR = $(shell pwd)
 INSTALL_DIR = /usr/local/bin
 
 # Files
-SOURCES = main.c $(SRCDIR)/combat.c $(SRCDIR)/lookup.c $(SRCDIR)/modify.c $(SRCDIR)/global.c 
+SOURCES = main.c $(SRCDIR)/combat.c $(SRCDIR)/lookup.c $(SRCDIR)/modify.c $(SRCDIR)/global.c $(SRCDIR)/setup.c
 OBJECTS = $(SOURCES:%.c=$(OBJDIR)/%.o)
 EXECUTABLE = $(BINDIR)/clidnbatter
 

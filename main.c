@@ -1,5 +1,7 @@
 #include "src/lookup.h"
 #include "src/combat.h"
+#include "src/global.h"
+#include "src/setup.h"
 
 int main (void)
 {
@@ -15,6 +17,7 @@ int main (void)
         int check = 1;
         printf("\nHome Options:\n");
         printf( "l: Database lookup\n"
+                "s: Set up combat scenario\n"
                 "c: Enter combat\n"
                 "m: Modify player database\n"
                 "x: Exit program (x can always be used to quit current function or return to menu)\n"
@@ -22,7 +25,7 @@ int main (void)
         while (check == 1)
         {
             fgets(choice, sizeof(choice), stdin);
-            if (isalpha(choice[0]) && (choice[0] == 'l' || choice[0] == 'c' || choice[0] == 'm' || choice[0] == 'x'))
+            if (isalpha(choice[0]) && (choice[0] == 'l' || choice[0] == 's' || choice[0] == 'c' || choice[0] == 'm' || choice[0] == 'x'))
             {
                 check = 0;
                 break;
@@ -37,6 +40,10 @@ int main (void)
         {
             case 'l':
                 gvCliDC_Lookup_Main();
+                break;
+
+            case 's':
+                gvCliDC_Setup_Main();
                 break;
 
             case 'c':

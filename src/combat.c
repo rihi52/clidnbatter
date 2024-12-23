@@ -6,7 +6,7 @@
  */
 static void vCliDC_Combat_MainLoop();
 static void vCliDC_Combat_PlayerSetUp();
-static int CliDC_Combat_ChoosePlayers();
+// static int CliDC_Combat_ChoosePlayers();
 static part *vCliDC_Combat_CreatePlayer(char *name);
 static int CliDC_Combat_ChooseMonstsers();
 static part *vCliDC_Combat_CreateMonster(char *name);
@@ -50,7 +50,7 @@ part *combatants[INITIATIVE_SPREAD];
 
 static void vCliDC_Combat_PlayerSetUp()
 {
-    char prompt[10];
+    char prompt[SMALL_BUFFER_BYTE];
 
     printf("*** Player Set Up ***\n\n");
 
@@ -66,30 +66,6 @@ static void vCliDC_Combat_PlayerSetUp()
     }
 
     gvCliDC_Modify_EnterPlayerInformation();
-}
-
-static int CliDC_Combat_ChoosePlayers()
-{
-    while (1)
-    {
-        memset(players, '\0', sizeof(players));
-        printf("\nPlease enter desired players from db separated only by commas (eg. ravi,finn,pax): ");
-        fgets(players, sizeof(players), stdin);
-        if (players[0] == '\n' && players[0] == ' ')
-        {
-            printf("Error: Input blank. Try again or enter x to return home.\n\n");
-            continue;
-        }
-        else if (players[0] == 'x' && players[1] == '\n')
-        {   /* Return to home menu if 'x' entered */
-            return 6;
-        }
-        else
-        {   /* Break out of loop if valid input */
-            break;
-        }
-    }
-    return 0;
 }
 
 static part *vCliDC_Combat_CreatePlayer(char *name)
@@ -600,13 +576,14 @@ void gvCliDC_Combat_Main(void)
      * Two loop statuses so the user input functions can be returned to if needed */
     while (0 == loop || 1 == loop)
     {
-        startPosition = 0;
+        //startPosition = 0;
         if (0 == loop)
         {
+            startPosition = 0;
             /* Add new players if desired */
             vCliDC_Combat_PlayerSetUp();
             /* Choose existing players and make sure there are no invalid characters */
-            while (0 != CliDC_Combat_ChoosePlayers())
+            while (0 != CliDC_Combat_ChoosePlayers(players, CHARACTER_BUFFER))
             {
                 /* Return to home menu if 'x' entered */
                 return;
@@ -638,7 +615,7 @@ void gvCliDC_Combat_Main(void)
         /* Null terminate player's name */
         namePlayers[nameIndex] = '\0';
 
-        /* If there is no name do not attempt to create a player struct and exit loop */
+        /* If there is no name do not attempt to create a player struct and restart loop */
         if ('\0' != namePlayers[0])
         {
             newPlayer = vCliDC_Combat_CreatePlayer(namePlayers);
@@ -764,4 +741,28 @@ void gvCliDC_Combat_Main(void)
     vCliDC_Combat_FreeCombatants();
     PrintCounter = -1;
     return;
+}
+
+int CliDC_Combat_ChoosePlayers(char *ChosenPlayers, size_t size)
+{
+    while (1)
+    {
+        memset(ChosenPlayers, '\0', sizeof(ChosenPlayers));
+        printf("\nPlease enter desired players from db separated only by commas (eg. ravi,finn,pax): ");
+        fgets(ChosenPlayers, size, stdin);
+        if (ChosenPlayers[0] == '\n' && ChosenPlayers[0] == ' ')
+        {
+            printf("Error: Input blank. Try again or enter x to return home.\n\n");
+            continue;
+        }
+        else if (ChosenPlayers[0] == 'x' && ChosenPlayers[1] == '\n')
+        {   /* Return to home menu if 'x' entered */
+            return 6;
+        }
+        else
+        {   /* Break out of loop if valid input */
+            break;
+        }
+    }
+    return 0;
 }

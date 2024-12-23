@@ -6,8 +6,8 @@
  *  SECTION - Local definitions
  *========================================================================*
  */
-#define CHARACTER_BUFFER_BYTE   100
-#define SMALL_BUFFER_BYTE       10
+// #define CHARACTER_BUFFER_BYTE   100
+// #define SMALL_BUFFER_BYTE       10
 
 /*========================================================================*
  *  SECTION - External variables that cannot be defined in header files   *
@@ -31,7 +31,7 @@ void vCliDC_Lookup_PrintDbContents(sqlite3_stmt *stmt, char *buffer);
  *========================================================================*
  */
 
- /*=======================================================================*
+/*========================================================================*
  *  SECTION - Local function definitions                                  *
  *========================================================================*
  */
