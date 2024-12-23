@@ -13,6 +13,7 @@
  *========================================================================*
  */
 
+
 /*========================================================================*
  *  SECTION - Extern global function prototypes                           *
  *========================================================================*
@@ -22,5 +23,7 @@ void gvCliDC_DatabaseOpen();
 void gvCliDC_DatabaseClose();
 int giCliDC_Lookup_PlayerAc(char *Name);
 int giCliDC_Lookup_PlayerHp(char *Name);
+int giCliDC_Lookup_ScenarioExist(char *Name);
+void gvCliDC_Lookup_PrintSingleScenario(int ScenarioID);
 
 #endif /* lookup.h */

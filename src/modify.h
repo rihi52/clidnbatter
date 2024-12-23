@@ -19,5 +19,8 @@
 void gvCliDC_Modify_MainLoop();
 void gvCliDC_Modify_EnterPlayerInformation();
 int giCliDC_Modify_NewPlayer(char *Name, int16_t Ac, int16_t Hp);
+void gvCliDC_Modify_ScenarioAddParticipant(char *Name, int Quantity, int Initiative, int ScenarioID, int PlayerOrMonster);
+void gvCliDC_Modify_ScenarioRemoveParticipant(char *Name, int ScenarioID);
+// void gvCliDC_Modify_ScenarioAddInitiative(char *Name, int Initiative, int ScenarioID);
 
 #endif /* modify.h */

@@ -33,13 +33,13 @@ static void vCliDC_Modify_ChangePlayerHP();
  */
 static void vCliDC_Modify_DeletePlayer()
 {
-    char Name[50];
+    char Name[INPUT_BUFFER_BYTE];
 
     while (1)
     {
         printf("\n** Delete Player **\n");
         printf("\nEnter name of Player to delete (not case-sensitive): ");
-        int input = giCliDC_Global_GetInput(Name);
+        int input = giCliDC_Global_GetTextInput(Name, INPUT_BUFFER_BYTE);
         if (input == 1)
         {
             continue;
@@ -158,13 +158,13 @@ static void vCliDC_Modify_ModifyChoices()
 
 static void vCliDC_Modify_ChangePlayerName()
 {
-    char Name[50];
-    char NewName[50];
+    char Name[INPUT_BUFFER_BYTE];
+    char NewName[INPUT_BUFFER_BYTE];
 
     while (1)
     {
         printf("Enter name of Player to change name of (not case-sensitive): ");
-        int input = giCliDC_Global_GetInput(Name);
+        int input = giCliDC_Global_GetTextInput(Name, INPUT_BUFFER_BYTE);
         if (input == 1)
         {
             continue;
@@ -182,7 +182,7 @@ static void vCliDC_Modify_ChangePlayerName()
     while (1)
     {
         printf("Enter new name: ");
-        int input = giCliDC_Global_GetInput(NewName);
+        int input = giCliDC_Global_GetTextInput(NewName, INPUT_BUFFER_BYTE);
         if (input == 1)
         {
             continue;
@@ -242,13 +242,13 @@ static void vCliDC_Modify_ChangePlayerName()
 
 static void vCliDC_Modify_ChangePlayerAC()
 {
-    char Name[50];
-    char NewAC[50];
+    char Name[INPUT_BUFFER_BYTE];
+    char NewAC[INPUT_BUFFER_BYTE];
 
     while (1)
     {
         printf("Enter name of Player to change AC of (not case-sensitive): ");
-        int input = giCliDC_Global_GetInput(Name);
+        int input = giCliDC_Global_GetTextInput(Name, INPUT_BUFFER_BYTE);
         if (input == 1)
         {
             continue;
@@ -266,7 +266,7 @@ static void vCliDC_Modify_ChangePlayerAC()
     while (1)
     {
         printf("Enter new AC: ");
-        int input = giCliDC_Global_GetInput(NewAC);
+        int input = giCliDC_Global_GetTextInput(NewAC, INPUT_BUFFER_BYTE);
         if (input == 1)
         {
             continue;
@@ -326,13 +326,13 @@ static void vCliDC_Modify_ChangePlayerAC()
 
 static void vCliDC_Modify_ChangePlayerHP()
 {
-    char Name[50];
-    char NewHP[50];
+    char Name[INPUT_BUFFER_BYTE];
+    char NewHP[INPUT_BUFFER_BYTE];
 
     while (1)
     {
         printf("Enter name of Player to change AC of (not case-sensitive): ");
-        int input = giCliDC_Global_GetInput(Name);
+        int input = giCliDC_Global_GetTextInput(Name, INPUT_BUFFER_BYTE);
         if (input == 1)
         {
             continue;
@@ -350,7 +350,7 @@ static void vCliDC_Modify_ChangePlayerHP()
     while (1)
     {
         printf("Enter new HP: ");
-        int input = giCliDC_Global_GetInput(NewHP);
+        int input = giCliDC_Global_GetTextInput(NewHP, INPUT_BUFFER_BYTE);
         if (input == 1)
         {
             continue;
@@ -561,3 +561,205 @@ int giCliDC_Modify_NewPlayer(char *Name, int16_t Ac, int16_t Hp)
     sqlite3_finalize(stmt);
     return 0;
 }
+
+/* Scenario Functions */
+void gvCliDC_Modify_ScenarioAddParticipant(char *Name, int Quantity, int Initiative, int ScenarioID, int PlayerOrMonster)
+{
+    sqlite3_stmt *stmt = NULL;
+    int rc;
+
+    const char *sql = "INSERT INTO participants (name, quantity, initiative, scenarioid, playerormonster) VALUES (?, ?, ?, ?, ?)";
+
+    rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        return;
+    }
+
+    rc = sqlite3_bind_text(stmt, 1, Name, -1, SQLITE_STATIC);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind name: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return;
+    }
+
+    rc = sqlite3_bind_int(stmt, 2, Quantity);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind AC: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return;
+    }
+
+    rc = sqlite3_bind_int(stmt, 3, Initiative);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind AC: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return;
+    }
+
+    rc = sqlite3_bind_int(stmt, 4, ScenarioID);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind HP: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return;
+    }
+
+    rc = sqlite3_bind_int(stmt, 5, PlayerOrMonster);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind HP: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return;
+    }
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE)
+    {
+        fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        return;
+    }
+    else
+    {
+        printf("%s added successfully.\n", Name);
+    }
+
+    sqlite3_finalize(stmt);
+    return;
+}
+
+void gvCliDC_Modify_ScenarioRemoveParticipant(char *Name, int ScenarioID)
+{
+    sqlite3_stmt *stmt = NULL;
+    int rc;
+
+    const char *sql = "DELETE FROM participants WHERE name = ? AND scenarioid = ?;";
+
+    rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        return;
+    }
+
+    rc = sqlite3_bind_text(stmt, 1, Name, -1, SQLITE_STATIC);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind name: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return;
+    }
+
+    rc = sqlite3_bind_int(stmt, 2, ScenarioID);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind HP: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return;
+    }
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE)
+    {
+        fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        return;
+    }
+    else
+    {
+        printf("%s removed successfully.\n", Name);
+    }
+
+    sqlite3_finalize(stmt);
+    return;
+}
+
+// void gvCliDC_Modify_ScenarioAddInitiative(char *Name, int Initiative, int ScenarioID)
+// {
+//     int rc;
+//     sqlite3_stmt *stmt = NULL;
+
+//     const char *sql = "SELECT id FROM participants WHERE name = ? AND scenarioid = ?";
+
+//     rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
+//     if (rc != SQLITE_OK)
+//     {
+//         fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
+//         return;
+//     }
+
+//     rc = sqlite3_bind_text(stmt, 1, Name, -1, SQLITE_STATIC);
+//     if (rc != SQLITE_OK)
+//     {
+//         fprintf(stderr, "Failed to bind name: %s\n", sqlite3_errmsg(pMonsterDb));
+//         sqlite3_finalize(stmt);
+//         return;
+//     }
+
+//     rc = sqlite3_bind_int(stmt, 2, ScenarioID);
+//     if (rc != SQLITE_OK)
+//     {
+//         fprintf(stderr, "Failed to bind HP: %s\n", sqlite3_errmsg(pMonsterDb));
+//         sqlite3_finalize(stmt);
+//         return;
+//     }
+
+//     rc = sqlite3_step(stmt);
+//     if (rc != SQLITE_ROW)
+//     {
+//         fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(pMonsterDb));
+//         return;
+//     }
+
+//     int ParticipantID = sqlite3_column_int(stmt, 0);
+//     sqlite3_finalize(stmt);
+
+//     // Step 2: Insert the initiative for the participant
+//     const char *sql2 = "INSERT INTO initiatives (partid, initiative, scenarioid) VALUES (?, ?, ?)";
+
+//     rc = sqlite3_prepare_v2(pMonsterDb, sql2, -1, &stmt, NULL);
+//     if (rc != SQLITE_OK)
+//     {
+//         fprintf(stderr, "Failed to prepare statement (Step 2): %s\n", sqlite3_errmsg(pMonsterDb));
+//         return;
+//     }
+
+//     rc = sqlite3_bind_int(stmt, 1, ParticipantID);
+//     if (rc != SQLITE_OK)
+//     {
+//         fprintf(stderr, "Failed to bind participant ID (Step 2): %s\n", sqlite3_errmsg(pMonsterDb));
+//         sqlite3_finalize(stmt);
+//         return;
+//     }
+
+//     rc = sqlite3_bind_int(stmt, 2, Initiative);
+//     if (rc != SQLITE_OK)
+//     {
+//         fprintf(stderr, "Failed to bind Initiative (Step 2): %s\n", sqlite3_errmsg(pMonsterDb));
+//         sqlite3_finalize(stmt);
+//         return;
+//     }
+
+//     rc = sqlite3_bind_int(stmt, 3, ScenarioID);
+//     if (rc != SQLITE_OK)
+//     {
+//         fprintf(stderr, "Failed to bind ScenarioID (Step 2): %s\n", sqlite3_errmsg(pMonsterDb));
+//         sqlite3_finalize(stmt);
+//         return;
+//     }
+
+//     rc = sqlite3_step(stmt);
+//     if (rc != SQLITE_DONE)
+//     {
+//         fprintf(stderr, "Failed to execute INSERT statement: %s\n", sqlite3_errmsg(pMonsterDb));
+//         sqlite3_finalize(stmt);
+//         return;
+//     }
+
+//     printf("Initiative added successfully for participant ID %d.\n", ParticipantID);
+//     sqlite3_finalize(stmt);
+//     return;
+// }

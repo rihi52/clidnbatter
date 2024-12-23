@@ -1,5 +1,7 @@
 #include "src/lookup.h"
 #include "src/combat.h"
+#include "src/global.h"
+#include "src/setup.h"
 
 int main (void)
 {
@@ -14,15 +16,17 @@ int main (void)
         printf("\n*** Home Menu ***\n");
         int check = 1;
         printf("\nHome Options:\n");
-        printf( "l: Database lookup\n"
-                "c: Enter combat\n"
+        printf( "d: Database lookup\n"
+                "s: Set up combat scenario\n"
+                "l: Launch combat scenario\n"
+                "e: Enter combat direct\n"
                 "m: Modify player database\n"
                 "x: Exit program (x can always be used to quit current function or return to menu)\n"
                 "Please choose from the above: ");
         while (check == 1)
         {
             fgets(choice, sizeof(choice), stdin);
-            if (isalpha(choice[0]) && (choice[0] == 'l' || choice[0] == 'c' || choice[0] == 'm' || choice[0] == 'x'))
+            if (isalpha(choice[0]) && (choice[0] == 'd' || choice[0] == 's' || choice[0] == 'l' ||choice[0] == 'e' || choice[0] == 'm' || choice[0] == 'x'))
             {
                 check = 0;
                 break;
@@ -35,12 +39,20 @@ int main (void)
 
         switch (choice[0])
         {
-            case 'l':
+            case 'd':
                 gvCliDC_Lookup_Main();
                 break;
 
-            case 'c':
-                gvCliDC_Combat_Main();
+            case 's':
+                gvCliDC_Setup_Main();
+                break;
+            
+            case 'l':
+                gvCliDC_Combat_Main(SCENARIO_COMBAT);
+                break;
+
+            case 'e':
+                gvCliDC_Combat_Main(DIRECT_COMBAT);
                 break;
 
             case 'm':

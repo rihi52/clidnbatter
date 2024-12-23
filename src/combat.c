@@ -1,14 +1,21 @@
 #include "combat.h"
 
 /*========================================================================*
+ *  SECTION - Local definitions
+ *========================================================================*
+ */
+#define RETURN_HOME 2
+
+/*========================================================================*
  *  SECTION - Local function prototypes                                   *
  *========================================================================*
  */
 static void vCliDC_Combat_MainLoop();
+static int vCliDC_Combat_ScenarioCombatSetUp();
 static void vCliDC_Combat_PlayerSetUp();
-static int CliDC_Combat_ChoosePlayers();
+// static int CliDC_Combat_ChoosePlayers();
 static part *vCliDC_Combat_CreatePlayer(char *name);
-static int CliDC_Combat_ChooseMonstsers();
+// static int CliDC_Combat_ChooseMonstsers();
 static part *vCliDC_Combat_CreateMonster(char *name);
 
 static void vCliDC_Combat_SetInitiative(struct part *person);
@@ -27,12 +34,10 @@ static void vCliDC_Combat_FreeCombatants();
  *  SECTION - Local variables                                             *
  *========================================================================*
  */
-#define CHARACTER_BUFFER    250
-#define MONSTER_BUFFER      350
 
 /***** Combatants *****/
-char players[CHARACTER_BUFFER];
-char monsters[MONSTER_BUFFER];
+static char players[CHARACTER_BUFFER];
+static char monsters[MONSTER_BUFFER];
 
 //static int currentInit = 0;
 static int numCombatants = 1;
@@ -48,9 +53,113 @@ part *combatants[INITIATIVE_SPREAD];
  *========================================================================*
  */
 
+static int vCliDC_Combat_ScenarioCombatSetUp()
+{
+    char ScenarioName[INPUT_BUFFER_BYTE];
+    char choice[YES_NO_INPUT_BUFFER_BYTE];
+    int Loop = 1, check = 1, ScenarioID = -1, ScenarioExists = 0;
+    memset(ScenarioName, '\0', sizeof(ScenarioName));
+    
+    printf("\n**** Launch Combat Scenario ****\n");
+    
+    // TODO:
+    while (Loop == 1)
+    {
+        printf("\nDisplay Scenarios? (y/n): ");
+        while (check == 1)
+        {
+            int input = 0;
+            input = giCliDC_Global_YesNoInput(choice, YES_NO_INPUT_BUFFER_BYTE);
+            if (YES_INPUT == input)
+            {
+                /* Display scenario names */
+                gvCliDC_Setup_CountScenarios(COMBAT_MENU);
+                check = 0;
+            }
+            else if (NO_INPUT == input)
+            {
+                check = 0;
+            }
+            else if (X_INPUT_DETECTED == input)
+            {
+                return 0;
+            }
+            else
+            {
+                /* Do nothing - incorrect input */
+            }
+        }
+        check = 1;
+        
+        printf("\nWhich scenario would you like to lauch: ");
+
+        /* Read input for scenario name */
+        int input = giCliDC_Global_GetTextInput(ScenarioName, INPUT_BUFFER_BYTE);
+
+        ScenarioID = giCliDC_Lookup_ScenarioExist(ScenarioName);
+        /* Check if scenario exists */
+        if (0 > ScenarioID)
+        {
+            /* Returned -1, meaning the scenario name was not found in the database */
+            printf("Error: Scenario Name does not exist\n");
+            ScenarioID = -1;
+            check = 1;
+        }
+        else
+        {
+            ScenarioExists = 1;
+            /* Do nothing */
+        }
+
+        if (1 == ScenarioExists)
+        {
+            printf("\nScenario to load: \n");
+            gvCliDC_Lookup_PrintSingleScenario(ScenarioID);
+            printf("Is this correct? (y/n): ");
+
+            while (check == 1)
+            {
+                int input = 0;
+                input = giCliDC_Global_YesNoInput(choice, YES_NO_INPUT_BUFFER_BYTE);
+                if (YES_INPUT == input)
+                {
+                    /* Display scenario names */
+                    check = 0;
+                    Loop = 0;
+                }
+                else if (NO_INPUT == input)
+                {
+                    check = 0;
+                }
+                else if (X_INPUT_DETECTED == input)
+                {
+                    return 0;
+                }
+                else
+                {
+                    /* Do nothing - incorrect input */
+                }
+            }
+            check = 1;
+        }
+        else
+        {
+            /* Do nothing */
+        }
+    }
+
+    
+    // Read participants in from participants table
+        // Pass the player names into the players array (e.g. ravi,finn)
+        // Create player structs and get initiative
+    // Read in monsters and their intiatives from the participants table
+        // Create structs for monsters and add to initiative using vCliDC_Combat_CreateMonster
+    return 0;
+}
+
 static void vCliDC_Combat_PlayerSetUp()
 {
-    char prompt[10];
+    char prompt[SMALL_BUFFER_BYTE];
 
     printf("*** Player Set Up ***\n\n");
 
@@ -66,30 +175,6 @@ static void vCliDC_Combat_PlayerSetUp()
     }
 
     gvCliDC_Modify_EnterPlayerInformation();
-}
-
-static int CliDC_Combat_ChoosePlayers()
-{
-    while (1)
-    {
-        memset(players, '\0', sizeof(players));
-        printf("\nPlease enter desired players from db separated only by commas (eg. ravi,finn,pax): ");
-        fgets(players, sizeof(players), stdin);
-        if (players[0] == '\n' && players[0] == ' ')
-        {
-            printf("Error: Input blank. Try again or enter x to return home.\n\n");
-            continue;
-        }
-        else if (players[0] == 'x' && players[1] == '\n')
-        {   /* Return to home menu if 'x' entered */
-            return 6;
-        }
-        else
-        {   /* Break out of loop if valid input */
-            break;
-        }
-    }
-    return 0;
 }
 
 static part *vCliDC_Combat_CreatePlayer(char *name)
@@ -126,18 +211,18 @@ static part *vCliDC_Combat_CreatePlayer(char *name)
     return new;
 }
 
-static int CliDC_Combat_ChooseMonstsers()
+int CliDC_Combat_ChooseMonstsers(char *ChosenMonsters, size_t size)
 {
     while (1)
     {
         printf("\nPlease enter desired monsters from db separated only by commas (eg. orc,animated armor,magmin): ");
-        fgets(monsters, sizeof(monsters), stdin);
-        if (monsters[0] == '\n' && monsters[0] == ' ')
+        fgets(ChosenMonsters, size, stdin);
+        if (ChosenMonsters[0] == '\n' && ChosenMonsters[0] == ' ')
         {
             printf("Error: Input blank. Try again or enter x to quit.\n");
             continue;
         }
-        else if (monsters[0] == 'x' && monsters[1] == '\n')
+        else if (ChosenMonsters[0] == 'x' && ChosenMonsters[1] == '\n')
         {   /* Return to home menu if 'x' entered */
             return 6;
         }
@@ -584,156 +669,180 @@ static void vCliDC_Combat_FreeCombatants()
  *  SECTION - Global function definitions                                 *
  *========================================================================*
  */
-void gvCliDC_Combat_Main(void)
+void gvCliDC_Combat_Main(int ScenarioOrDirect)
 {
     for(int i = 0; i < INITIATIVE_SPREAD; i++){
         combatants[i] = NULL;
     }
 
-    printf("\n**** Begin acquiring player character information ****\n\n");
-
-    char namePlayers[CHARACTER_BUFFER];
-    char endchar = ' ';
-    int length, startPosition = 0, loop = 0;
-    part *newPlayer = NULL;
-    /* Loop to acquire player information
-     * Two loop statuses so the user input functions can be returned to if needed */
-    while (0 == loop || 1 == loop)
+    if (SCENARIO_COMBAT == ScenarioOrDirect)
     {
+        int status = vCliDC_Combat_ScenarioCombatSetUp();
+        if (RETURN_HOME == status)
+        {
+            return;
+        }
+
+    }
+    else
+    {
+        printf("\n**** Begin acquiring player character information ****\n\n");
+
+        char namePlayers[CHARACTER_BUFFER];
+        char endchar = ' ';
+        int length, startPosition = 0, loop = 0;
+        part *newPlayer = NULL;
+        /* Loop to acquire player information
+        * Two loop statuses so the user input functions can be returned to if needed */
+        while (0 == loop || 1 == loop)
+        {
+            //startPosition = 0;
+            if (0 == loop)
+            {
+                startPosition = 0;
+
+                /* Add new players if desired */
+                vCliDC_Combat_PlayerSetUp();
+
+                /* Choose existing players and make sure there are no invalid characters 
+                * Don't use Global_GetInput to allow spaces in player names */
+                while (0 != CliDC_Combat_ChoosePlayers(players, CHARACTER_BUFFER))
+                {
+                    /* Return to home menu if 'x' entered */
+                    return;
+                }
+                length = strlen(players);
+                loop = 1;
+            }
+
+            memset(namePlayers, '\0', sizeof(namePlayers));
+            int nameIndex = 0;
+
+            /* Read the inputted players into players[] one at a time */
+            for (int i = startPosition; i <= length; i++)
+            {
+                if (players[i] != ',' && players[i] != '\n')
+                {
+                    if (nameIndex < CHARACTER_BUFFER)
+                    {
+                        namePlayers[nameIndex] = players[i];
+                        nameIndex++;                    
+                    }
+                }
+                else
+                {
+                    endchar = players[i];
+                    startPosition = i + 1;
+                    break;
+                }
+            }
+            /* Null terminate player's name */
+            namePlayers[nameIndex] = '\0';
+
+            /* If there is no name do not attempt to create a player struct and restart loop */
+            if ('\0' != namePlayers[0])
+            {
+                newPlayer = vCliDC_Combat_CreatePlayer(namePlayers);
+            }
+            else
+            {
+                loop = 0;
+                continue;
+            }
+
+            if (newPlayer == NULL)
+            {
+                printf("Please re-enter players' names or enter 'x' to return to home\n\n");
+                loop = 0;
+                continue;
+            }
+
+            vCliDC_Combat_SetInitiative(newPlayer);
+
+            if (endchar == '\n')
+            {
+                loop = 2;
+                break;
+            }
+        }
+
+        printf("\n**** End acquiring player character information ****\n");
+        printf("\n**** Begin acquiring enemy information ****\n");
+
+        int input = 1;
+        while (0 != input)
+        {
+            input = CliDC_Combat_ChooseMonstsers(monsters, CHARACTER_BUFFER);
+            if (X_INPUT_DETECTED == input)
+            {
+                return;
+            }        
+        }
+
+        char nameMonsters[MONSTER_BUFFER];
+        endchar = ' ';
+        length = strlen(monsters);
         startPosition = 0;
-        if (0 == loop)
+        part *newMonster = NULL;
+        while (1)
         {
-            /* Add new players if desired */
-            vCliDC_Combat_PlayerSetUp();
-            /* Choose existing players and make sure there are no invalid characters */
-            while (0 != CliDC_Combat_ChoosePlayers())
+            memset(nameMonsters, '\0', sizeof(nameMonsters));
+            int nameIndex = 0;
+            for (int i = startPosition; i <= length; i++)
             {
-                /* Return to home menu if 'x' entered */
-                return;
-            }
-            length = strlen(players);
-            loop = 1;
-        }
-
-        memset(namePlayers, '\0', sizeof(namePlayers));
-        int nameIndex = 0;
-        /* Read the inputted players into players[] one at a time */
-        for (int i = startPosition; i <= length; i++)
-        {
-            if (players[i] != ',' && players[i] != '\n')
-            {
-                if (nameIndex < CHARACTER_BUFFER)
+                if (monsters[i] != ',' && monsters[i] != '\n')
                 {
-                    namePlayers[nameIndex] = players[i];
-                    nameIndex++;
+                    if (nameIndex < CHARACTER_BUFFER)
+                    {
+                        nameMonsters[nameIndex] = monsters[i];
+                        nameIndex++;
+                    }
+                }
+                else
+                {
+                    endchar = monsters[i];
+                    startPosition = i + 1;
+                    break;
                 }
             }
-            else
+            nameMonsters[nameIndex] = '\0';
+            printf("How many %s: ", nameMonsters);
+            int num;
+            gvCliDC_Global_CheckIntegerInputs(&num);
+            part *head = NULL;
+            part *tail = NULL;
+            for (int i = 0; i < num; i++)
             {
-                endchar = players[i];
-                startPosition = i + 1;
+                newMonster = vCliDC_Combat_CreateMonster(nameMonsters);
+                if (newMonster == NULL)
+                {
+                    printf("Error: newMonster returned NULL.\n");
+                    return;
+                }
+
+                if (NULL == head)
+                {
+                    head = newMonster;
+                }
+                else
+                {
+                    tail->next = newMonster;
+                }
+
+                tail = newMonster;
+
+                newMonster = newMonster->next;
+            }
+
+            vCliDC_Combat_SetInitiative(head);
+            if (endchar == '\n')
+            {
                 break;
             }
         }
-        /* Null terminate player's name */
-        namePlayers[nameIndex] = '\0';
 
-        /* If there is no name do not attempt to create a player struct and exit loop */
-        if ('\0' != namePlayers[0])
-        {
-            newPlayer = vCliDC_Combat_CreatePlayer(namePlayers);
-        }
-        else
-        {
-            loop = 0;
-            continue;
-        }
-
-        if (newPlayer == NULL)
-        {
-            printf("Please re-enter players' names or enter 'x' to return to home\n\n");
-            loop = 0;
-            continue;
-        }
-        vCliDC_Combat_SetInitiative(newPlayer);
-        if (endchar == '\n')
-        {
-            loop = 2;
-            break;
-        }
+        printf("\n**** End acquiring enemy information ****\n\n");
     }
-
-    printf("\n**** End acquiring player character information ****\n");
-    printf("\n**** Begin acquiring enemy information ****\n");
-
-    while (0 != CliDC_Combat_ChooseMonstsers())
-    {
-        CliDC_Combat_ChooseMonstsers();
-    }
-
-    char nameMonsters[MONSTER_BUFFER];
-    endchar = ' ';
-    length = strlen(monsters);
-    startPosition = 0;
-    part *newMonster = NULL;
-    while (1)
-    {
-        memset(nameMonsters, '\0', sizeof(nameMonsters));
-        int nameIndex = 0;
-        for (int i = startPosition; i <= length; i++)
-        {
-            if (monsters[i] != ',' && monsters[i] != '\n')
-            {
-                if (nameIndex < CHARACTER_BUFFER)
-                {
-                    nameMonsters[nameIndex] = monsters[i];
-                    nameIndex++;
-                }
-            }
-            else
-            {
-                endchar = monsters[i];
-                startPosition = i + 1;
-                break;
-            }
-        }
-        nameMonsters[nameIndex] = '\0';
-        printf("How many %s: ", nameMonsters);
-        int num;
-        gvCliDC_Global_CheckIntegerInputs(&num);
-        part *head = NULL;
-        part *tail = NULL;
-        for (int i = 0; i < num; i++)
-        {
-            newMonster = vCliDC_Combat_CreateMonster(nameMonsters);
-            if (newMonster == NULL)
-            {
-                printf("Error: newMonster returned NULL.\n");
-                return;
-            }
-
-            if (NULL == head)
-            {
-                head = newMonster;
-            }
-            else
-            {
-                tail->next = newMonster;
-            }
-
-            tail = newMonster;
-
-            newMonster = newMonster->next;
-        }
-
-        vCliDC_Combat_SetInitiative(head);
-        if (endchar == '\n')
-        {
-            break;
-        }
-    }
-
-    printf("\n**** End acquiring enemy information ****\n\n");
 
     vCliDC_Combat_PrintInitiativeOrder();
 
@@ -764,4 +873,31 @@ void gvCliDC_Combat_Main(void)
     vCliDC_Combat_FreeCombatants();
     PrintCounter = -1;
     return;
+}
+
+int CliDC_Combat_ChoosePlayers(char *ChosenPlayers, size_t size)
+{
+    int result = 0;
+    while (1)
+    {
+        memset(ChosenPlayers, '\0', size);
+        printf("\nPlease enter desired players from db separated only by commas (eg. ravi,finn,pax): ");
+        fgets(ChosenPlayers, size, stdin);
+        if (ChosenPlayers[0] == '\n' && ChosenPlayers[0] == ' ')
+        {
+            printf("Error: Input blank. Try again or enter x to return home.\n\n");
+            continue;
+        }
+        else if (ChosenPlayers[0] == 'x' && ChosenPlayers[1] == '\n')
+        {   /* Return to home menu if 'x' entered */
+            result = 6;
+            break;
+        }
+        else
+        {   /* Break out of loop if valid input */
+            result = 0;
+            break;
+        }
+    }
+    return result;
 }

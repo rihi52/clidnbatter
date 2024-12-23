@@ -4,8 +4,6 @@
  *  SECTION - Local definitions
  *========================================================================*
  */
-#define CHARACTER_BUFFER_BYTE   100
-#define SMALL_BUFFER_BYTE       10
 
 /*========================================================================*
  *  SECTION - External variables that cannot be defined in header files   *
@@ -58,12 +56,14 @@ void gvCliDC_Global_CheckIntegerInputs(int *numberOf)
             continue;
         }
     }
+    return;
 }
 
-int giCliDC_Global_GetInput(char *Buffer)
+int giCliDC_Global_GetTextInput(char *Buffer, size_t Size)
 {
     int result = 0;
-    fgets(Buffer, sizeof(Buffer), stdin);
+
+    fgets(Buffer, Size, stdin);
     if (Buffer[0] != '\n' && Buffer[0] != ' ' && 2 < strlen(Buffer))
     {
         Buffer[strcspn(Buffer, "\n")] = '\0';
@@ -81,4 +81,56 @@ int giCliDC_Global_GetInput(char *Buffer)
     }
 
     return result;
+}
+
+int giCliDC_Global_YesNoInput(char *Buffer, size_t Size)
+{
+    /* 0 is yes
+       1 is no
+       X_INPUT_DETECTED (6) is x for quit
+       2 is error 
+    */
+    int Response = 0;
+
+    fgets(Buffer, sizeof(Size), stdin);
+    if (isalpha(Buffer[0]) && (Buffer[0] == 'y'))
+    {
+        Response = 0;
+    }
+    else if (isalpha(Buffer[0]) && (Buffer[0] == 'n'))
+    {
+        Response = 1;
+    }
+    else if(isalpha(Buffer[0]) && (Buffer[0] == 'x'))
+    {
+        Response = X_INPUT_DETECTED;
+    }
+    else
+    {
+        printf("Error: Choices are y for yes, n for no, or x for quit.\n");
+        Response = 2;
+    }
+    return Response;
+}
+
+sqlite3_stmt *CliDC_Global_PrepareAndBindText(const char *sql, const char *BindValue)
+{
+    sqlite3_stmt *stmt = NULL;
+    int rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_close(pMonsterDb);
+        return NULL;
+    }
+
+    rc = sqlite3_bind_text(stmt, 1, BindValue, -1, SQLITE_TRANSIENT);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind AC: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return NULL;
+    }
+
+    return stmt;
 }

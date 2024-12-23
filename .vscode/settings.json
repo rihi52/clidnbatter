@@ -5,7 +5,14 @@
         "typeinfo": "c",
         "stdint.h": "c",
         "global.h": "c",
-        "sqlite3.h": "c"
+        "sqlite3.h": "c",
+        "array": "c",
+        "string_view": "c",
+        "initializer_list": "c",
+        "ranges": "c",
+        "utility": "c",
+        "setup.h": "c",
+        "stdbool.h": "c"
     },
     "makefile.configureOnOpen": false
 }

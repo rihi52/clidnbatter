@@ -4,11 +4,14 @@
 #include "lookup.h"
 #include "modify.h"
 #include "global.h"
+#include "setup.h"
 #include "sqlite3.h"
 #include <stdbool.h>
 #include <stdio.h>
 
-#define INITIATIVE_SPREAD 30
+#define INITIATIVE_SPREAD   30
+#define SCENARIO_COMBAT     1
+#define DIRECT_COMBAT       0
 
 typedef struct part{
     char *name;
@@ -23,8 +26,7 @@ typedef struct part{
     struct part *next;
 }part;
 
-// part enemies[] = {{"Orc", false, 0, 0, 0, 13, 15, NULL}, {"Orog", false, 0, 0, 0, 18, 53, NULL}}; // Test - do I need individually named structs or array of structs?
-
-void gvCliDC_Combat_Main(void);
-
+void gvCliDC_Combat_Main(int ScenarioOrDirect);
+int CliDC_Combat_ChoosePlayers(char *ChosenPlayers, size_t size);
+int CliDC_Combat_ChooseMonstsers(char *ChosenPlayers, size_t size);
 #endif  /*combat.h*/

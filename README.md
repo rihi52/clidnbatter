@@ -20,6 +20,7 @@ a table for player management, designed for 5th edition.
 - A sqlite database containing the below stats of all monsters in the 5E SRD:
   - Name
   - Type
+  - size
   - CR
   - AC
 - Monsters can be searched and displayed by any of the above stats
@@ -27,13 +28,10 @@ a table for player management, designed for 5th edition.
 
 ## Future
 
- - Lookup by:
-   - size
  - Option to display full SRD statblock of individual monster
  - Combat menu for scenario set up options before running scenario
  - Save scenarios in database
  - Add custom monster option
- - Healing
 
 ## Screenshots
 
