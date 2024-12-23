@@ -1,5 +1,6 @@
 #include "src/lookup.h"
 #include "src/combat.h"
+#include "src/global.h"
 
 int main (void)
 {

@@ -19,6 +19,7 @@
  *========================================================================*
  */
 void vCliDC_Lookup_MonsterName();
+void vCliDC_Lookup_MonsterSize();
 void vCliDC_Lookup_MonsterCr();
 void vCliDC_Lookup_MonsterType();
 int iCliDC_Lookup_GetInput(char *buffer);
@@ -111,7 +112,7 @@ void vCliDC_Lookup_MonsterCr()
         }
     }
 
-    const char *sql = "SELECT id, name, type, cr, hp, ac FROM monsters WHERE cr = ?";
+    const char *sql = "SELECT id, name, type, size, cr, hp, ac FROM monsters WHERE cr = ?";
 
     stmt = CliDC_Lookup_PrepareAndBind(sql, buffer);
 
@@ -145,7 +146,7 @@ void vCliDC_Lookup_MonsterName()
         }
     }
 
-    const char *sql = "SELECT id, name, type, cr, hp, ac FROM monsters WHERE name LIKE ? COLLATE NOCASE";
+    const char *sql = "SELECT id, name, type, size, cr, hp, ac FROM monsters WHERE name LIKE ? COLLATE NOCASE";
 
     char searchPattern[CHARACTER_BUFFER_BYTE + 10];
     snprintf(searchPattern, sizeof(searchPattern), "%%%s%%", monsters);
@@ -182,11 +183,49 @@ void vCliDC_Lookup_MonsterType()
         }
     }
 
-    const char *sql = "SELECT id, name, type, cr, hp, ac FROM monsters WHERE type LIKE ? COLLATE NOCASE";
+    const char *sql = "SELECT id, name, type, size, cr, hp, ac FROM monsters WHERE type LIKE ? COLLATE NOCASE";
 
     /* Copy to new buffer to add wildcards */
     char searchPattern[CHARACTER_BUFFER_BYTE + 10];
     snprintf(searchPattern, sizeof(searchPattern), "%%%s%%", types);
+
+    stmt = CliDC_Lookup_PrepareAndBind(sql, searchPattern);
+
+    vCliDC_Lookup_PrintDbContents(stmt, searchPattern);
+
+    sqlite3_finalize(stmt);
+}
+
+void vCliDC_Lookup_MonsterSize()
+{
+    char Sizes[CHARACTER_BUFFER_BYTE];
+    memset(Sizes, '\0', sizeof(Sizes));
+    sqlite3_stmt *stmt = NULL;
+
+    printf("\n*** Size lookup ***");
+    while (1)
+    {
+        printf("\nPlease enter Type of desired monster: ");
+        int input = iCliDC_Lookup_GetInput(Sizes);
+        if (input == 1)
+        {
+            continue;
+        }
+        else if (input == 2)
+        {
+            return;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    const char *sql = "SELECT id, name, type, size, cr, hp, ac FROM monsters WHERE size LIKE ? COLLATE NOCASE";
+
+    /* Copy to new buffer to add wildcards */
+    char searchPattern[CHARACTER_BUFFER_BYTE + 10];
+    snprintf(searchPattern, sizeof(searchPattern), "%%%s%%", Sizes);
 
     stmt = CliDC_Lookup_PrepareAndBind(sql, searchPattern);
 
@@ -220,7 +259,7 @@ void vCliDC_Lookup_MonsterAc()
         }
     }
 
-    const char *sql = "SELECT id, name, type, cr, hp, ac FROM monsters WHERE ac = ?";
+    const char *sql = "SELECT id, name, type, size, cr, hp, ac FROM monsters WHERE ac = ?";
 
     stmt = CliDC_Lookup_PrepareAndBind(sql, buffer);
 
@@ -275,9 +314,9 @@ void vCliDC_Lookup_PrintDbContents(sqlite3_stmt *stmt, char *buffer)
     int rc;
 
     /* Print table header */
-    printf("--------------------------------------------------------------------------------------\n");
-    printf("| ID | Name                      |               Type               |  CR  | HP | AC |\n");
-    printf("--------------------------------------------------------------------------------------\n");
+    printf("-------------------------------------------------------------------------------------------------\n");
+    printf("| ID | Name                      |               Type               |    SIZE    | CR  | HP | AC |\n");
+    printf("-------------------------------------------------------------------------------------------------\n");
 
     int found = 0;
     /* Chatgpt used to learn how to do this step with SQLite API */
@@ -288,11 +327,14 @@ void vCliDC_Lookup_PrintDbContents(sqlite3_stmt *stmt, char *buffer)
         int id = sqlite3_column_int(stmt, 0);
         const char *name = (const char *)sqlite3_column_text(stmt, 1);
         const char *type = (const char *)sqlite3_column_text(stmt, 2);
-        const char *cr = (const char *)sqlite3_column_text(stmt, 3);
-        int hp = sqlite3_column_int(stmt, 4);
-        int ac = sqlite3_column_int(stmt, 5);
+        const char *size = (const char *)sqlite3_column_text(stmt, 3);
+        const char *cr = (const char *)sqlite3_column_text(stmt, 4);        
+        int hp = sqlite3_column_int(stmt, 5);
+        int ac = sqlite3_column_int(stmt, 6);
 
-        printf("|%-3d | %-25s | %-32s | %-4s | %-3d| %-2d |\n", id, name, type, cr, hp, ac);
+        // TODO: FINISH ADDING SIZE TO QUERIES AND TABLE
+
+        printf("|%-3d | %-25s | %-32s | %-10s | %-2s | %-3d| %-2d |\n", id, name, type, size, cr, hp, ac);
     }
 
     if (!found)
@@ -301,7 +343,7 @@ void vCliDC_Lookup_PrintDbContents(sqlite3_stmt *stmt, char *buffer)
     }
 
     /* End table */
-    printf("--------------------------------------------------------------------------------------\n");
+    printf("-------------------------------------------------------------------------------------------------\n");
 
     if (rc != SQLITE_DONE) {
         fprintf(stderr, "Error during iteration: %s\n", sqlite3_errmsg(pMonsterDb));
@@ -395,17 +437,18 @@ void gvCliDC_Lookup_Main()
 
         printf("\nLookup Options:\n");
         printf( "p: Display all players\n"
-                "c: Lookup a monster(s) by CR\n"
-                "n: Lookup monster by Name\n"                
-                "t: Lookup monster by Type\n"
-                "a: Lookup monster by AC\n"
+                "c: Lookup monsters by CR\n"
+                "n: Lookup monsters by Name\n"                
+                "t: Lookup monsters by Type\n"
+                "s: Lookup monsters by Size\n"
+                "a: Lookup monsters by AC\n"
                 "x: Return to home menu\n"
                 "Please choose from the above: ");
         /* Loop to ensure only one of the provided options can be selected */
         while (check == 1)
         {
             fgets(choice, sizeof(choice), stdin);
-            if (isalpha(choice[0]) && (choice[0] == 'p' || choice[0] == 'c' || choice[0] == 'n' || choice[0] == 'x' || choice[0] == 't' || choice[0] == 'a'))
+            if (isalpha(choice[0]) && (choice[0] == 'p' || choice[0] == 'c' || choice[0] == 'n' || choice[0] == 's' || choice[0] == 'x' || choice[0] == 't' || choice[0] == 'a'))
             {
                 check = 0;
                 break;
@@ -429,6 +472,10 @@ void gvCliDC_Lookup_Main()
 
             case 'n':
                 vCliDC_Lookup_MonsterName();
+                break;
+            
+            case 's':
+                vCliDC_Lookup_MonsterSize();
                 break;
 
             case 't':

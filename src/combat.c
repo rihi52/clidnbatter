@@ -50,7 +50,7 @@ part *combatants[INITIATIVE_SPREAD];
 
 static void vCliDC_Combat_PlayerSetUp()
 {
-    char prompt[10];
+    char prompt[SMALL_BUFFER_BYTE];
 
     printf("*** Player Set Up ***\n\n");
 
@@ -600,9 +600,11 @@ void gvCliDC_Combat_Main(void)
      * Two loop statuses so the user input functions can be returned to if needed */
     while (0 == loop || 1 == loop)
     {
-        startPosition = 0;
         if (0 == loop)
         {
+            /* Reset the starting position for looping though player names if the loop gets reset to 0 */
+            startPosition = 0;
+
             /* Add new players if desired */
             vCliDC_Combat_PlayerSetUp();
             /* Choose existing players and make sure there are no invalid characters */
@@ -638,13 +640,13 @@ void gvCliDC_Combat_Main(void)
         /* Null terminate player's name */
         namePlayers[nameIndex] = '\0';
 
-        /* If there is no name do not attempt to create a player struct and exit loop */
+        /* If there is no name do not attempt to create a player struct and restart loop */
         if ('\0' != namePlayers[0])
         {
             newPlayer = vCliDC_Combat_CreatePlayer(namePlayers);
         }
         else
-        {
+        {   /* Restart loop */
             loop = 0;
             continue;
         }

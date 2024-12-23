@@ -11,6 +11,8 @@
  *  SECTION - Global definitions 
  *========================================================================* 
  */
+#define CHARACTER_BUFFER_BYTE   100
+#define SMALL_BUFFER_BYTE       10
 extern sqlite3 *pMonsterDb;
 
 /*========================================================================* 
