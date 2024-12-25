@@ -27,12 +27,12 @@ static void vCliDC_Combat_FreeCombatants();
  *  SECTION - Local variables                                             *
  *========================================================================*
  */
-#define CHARACTER_BUFFER    250
-#define MONSTER_BUFFER      350
+// #define CHARACTER_BUFFER    250
+// #define MONSTER_BUFFER      350
 
 /***** Combatants *****/
-char players[CHARACTER_BUFFER];
-char monsters[MONSTER_BUFFER];
+static char players[CHARACTER_BUFFER];
+static char monsters[MONSTER_BUFFER];
 
 //static int currentInit = 0;
 static int numCombatants = 1;
@@ -747,7 +747,7 @@ int CliDC_Combat_ChoosePlayers(char *ChosenPlayers, size_t size)
 {
     while (1)
     {
-        memset(ChosenPlayers, '\0', sizeof(ChosenPlayers));
+        memset(ChosenPlayers, '\0', size);
         printf("\nPlease enter desired players from db separated only by commas (eg. ravi,finn,pax): ");
         fgets(ChosenPlayers, size, stdin);
         if (ChosenPlayers[0] == '\n' && ChosenPlayers[0] == ' ')

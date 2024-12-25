@@ -288,7 +288,6 @@ int iCliDC_Lookup_GetInput(char *buffer)
 
 sqlite3_stmt *CliDC_Lookup_PrepareAndBind(const char *sql, const char *BindValue)
 {
-    /* Chatgpt used to learn this SQLite API */
     sqlite3_stmt *stmt = NULL;
     int rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
     if (rc != SQLITE_OK)

@@ -22,6 +22,8 @@ static void vCliDC_Modify_ChangePlayerName();
 static void vCliDC_Modify_ChangePlayerAC();
 static void vCliDC_Modify_ChangePlayerHP();
 
+sqlite3_stmt *CliDC_Modify_PrepareAndBind(const char *sql, const char *BindValue);
+
 /*========================================================================*
  *  SECTION - Local variables                                             *
  *========================================================================*
@@ -561,3 +563,33 @@ int giCliDC_Modify_NewPlayer(char *Name, int16_t Ac, int16_t Hp)
     sqlite3_finalize(stmt);
     return 0;
 }
+
+/* Scenario Functions */
+void gvCliDC_Modify_ScenarioAddPlayers()
+{
+
+}
+
+/* Start DUPE in lookup - move to global? TODO */
+sqlite3_stmt *CliDC_Modify_PrepareAndBind(const char *sql, const char *BindValue)
+{
+    sqlite3_stmt *stmt = NULL;
+    int rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_close(pMonsterDb);
+        return NULL;
+    }
+
+    rc = sqlite3_bind_text(stmt, 1, BindValue, -1, SQLITE_TRANSIENT);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind AC: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return NULL;
+    }
+
+    return stmt;
+}
+/* End DUPE in lookup - move to global? TODO */

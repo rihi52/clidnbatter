@@ -10,7 +10,8 @@
         "string_view": "c",
         "initializer_list": "c",
         "ranges": "c",
-        "utility": "c"
+        "utility": "c",
+        "setup.h": "c"
     },
     "makefile.configureOnOpen": false
 }

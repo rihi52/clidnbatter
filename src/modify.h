@@ -20,4 +20,6 @@ void gvCliDC_Modify_MainLoop();
 void gvCliDC_Modify_EnterPlayerInformation();
 int giCliDC_Modify_NewPlayer(char *Name, int16_t Ac, int16_t Hp);
 
+void gvCliDC_Modify_ScenarioAddPlayers();
+
 #endif /* modify.h */

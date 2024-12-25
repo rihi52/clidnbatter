@@ -1,7 +1,5 @@
 #include "setup.h"
 
-
-
 /*========================================================================*
  *  SECTION - Local definitions
  *========================================================================*
@@ -24,6 +22,8 @@ static void vCliDC_Setup_DisplayScenarios();
  *  SECTION - Local variables                                             *
  *========================================================================*
  */
+static char players[CHARACTER_BUFFER];
+static char monsters[MONSTER_BUFFER];
 
  /*=======================================================================*
  *  SECTION - Local function definitions                                  *
@@ -62,7 +62,7 @@ static void vCliDC_Setup_ScenarioMenu()
         switch (choice[0])
         {
             case 'p':
-                
+                vCliDC_Setup_AddRemovePlayers();
                 break;
 
             case 'm':
@@ -84,23 +84,139 @@ static void vCliDC_Setup_AddRemovePlayers()
 {
     char prompt[10];
 
-    printf("\n** Player Menu **\n");
-    printf("Do you wish to add or remove players (a/r)?: ");
+    printf("\n** Player Menu **\n");    
 
-    do /* Keep asking if 'y' for yes or 'n' for no isn't entered */
+    char namePlayers[CHARACTER_BUFFER];
+    char endchar = ' ';
+    int length, startPosition = 0, loop = 0;
+
+    /* Loop to acquire player information
+     * Two loop statuses so the user input functions can be returned to if needed */
+    while (0 == loop || 1 == loop)
     {
-        printf("Do you wish to add any new players to the database? (y/n): ");
-        fgets(prompt, sizeof(prompt), stdin);
-    } while (strlen(prompt) != 1 && ('a' != prompt[0] && 'r' != prompt[0] && 'x' != prompt[0]));
+        //startPosition = 0;
+        if (0 == loop)
+        {
+            startPosition = 0;
+            /* Add new players if desired */
+            do /* Keep asking if 'y' for yes or 'n' for no isn't entered */
+            {
+                printf("Do you wish to add or remove players (a/r)?: ");
+                fgets(prompt, sizeof(prompt), stdin);
+            } while (strlen(prompt) != 1 && ('a' != prompt[0] && 'r' != prompt[0] && 'x' != prompt[0]));
 
-    if ('a' == prompt[0] && '\n' == prompt[1])
-    {   /* Add players TODO */
-        // CliDC_Combat_ChoosePlayers();
-    }
-    else if('r' == prompt[0] && '\n' == prompt[1])
-    {   /* Remove players TODO */
+            /* If statment to add or remove players - NEEDS optimized TODO */
+            if ('a' == prompt[0] && '\n' == prompt[1])
+            {   /* Add players TODO */
+                while (0 != CliDC_Combat_ChoosePlayers(players, CHARACTER_BUFFER))
+                {
+                    /* Return to home menu if 'x' entered */
+                    return;
+                }
+                length = strlen(players);
+                loop = 1;
 
-    }
+                memset(namePlayers, '\0', sizeof(namePlayers));
+                int nameIndex = 0;
+                /* Read the inputted players into players[] one at a time */
+                for (int i = startPosition; i <= length; i++)
+                {
+                    if (players[i] != ',' && players[i] != '\n')
+                    {
+                        if (nameIndex < CHARACTER_BUFFER)
+                        {
+                            namePlayers[nameIndex] = players[i];
+                            nameIndex++;
+                        }
+                    }
+                    else
+                    {
+                        endchar = players[i];
+                        startPosition = i + 1;
+                        break;
+                    }
+                }
+                /* Null terminate player's name */
+                namePlayers[nameIndex] = '\0';
+
+                if ('\0' != namePlayers[0])
+                {
+                    // TODO: Add chosen players to scenario in db
+                }
+                else
+                {
+                    loop = 0;
+                    continue;
+                }
+
+            }
+            else if('r' == prompt[0] && '\n' == prompt[1])
+            {   /* Remove players TODO */
+                while (0 != CliDC_Combat_ChoosePlayers(players, CHARACTER_BUFFER))
+                {
+                    /* Return to home menu if 'x' entered */
+                    return;
+                }
+                length = strlen(players);
+                loop = 1;
+
+                memset(namePlayers, '\0', sizeof(namePlayers));
+                int nameIndex = 0;
+                /* Read the inputted players into players[] one at a time */
+                for (int i = startPosition; i <= length; i++)
+                {
+                    if (players[i] != ',' && players[i] != '\n')
+                    {
+                        if (nameIndex < CHARACTER_BUFFER)
+                        {
+                            namePlayers[nameIndex] = players[i];
+                            nameIndex++;
+                        }
+                    }
+                    else
+                    {
+                        endchar = players[i];
+                        startPosition = i + 1;
+                        break;
+                    }
+                }
+                /* Null terminate player's name */
+                namePlayers[nameIndex] = '\0';
+
+                if ('\0' != namePlayers[0])
+                {
+                    // TODO: Remove chosen players scenario in db
+                }
+                else
+                {
+                    loop = 0;
+                    continue;
+                }
+
+            }
+
+        }
+
+        
+
+        /* If there is no name do not attempt to create a player struct and restart loop */
+        
+
+        if (newPlayer == NULL)
+        {
+            printf("Please re-enter players' names or enter 'x' to return to home\n\n");
+            loop = 0;
+            continue;
+        }
+        vCliDC_Combat_SetInitiative(newPlayer);
+        if (endchar == '\n')
+        {
+            loop = 2;
+            break;
+        }
+    } 
+
+    
     
     /* Skips if statement and returns if 'x' is chosen */
     return;
