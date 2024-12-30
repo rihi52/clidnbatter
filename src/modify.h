@@ -19,7 +19,8 @@
 void gvCliDC_Modify_MainLoop();
 void gvCliDC_Modify_EnterPlayerInformation();
 int giCliDC_Modify_NewPlayer(char *Name, int16_t Ac, int16_t Hp);
-
-void gvCliDC_Modify_ScenarioAddPlayers();
+sqlite3_stmt *CliDC_Modify_PrepareAndBind(const char *sql, const char *BindValue);
+void gvCliDC_Modify_ScenarioAddPlayers(char *Name, int Quantity, int ScenarioID);
+void gvCliDC_Modify_ScenarioRemovePlayers(char *Name, int ScenarioID);
 
 #endif /* modify.h */

@@ -58,10 +58,10 @@ void gvCliDC_Global_CheckIntegerInputs(int *numberOf)
     }
 }
 
-int giCliDC_Global_GetInput(char *Buffer)
+int giCliDC_Global_GetInput(char *Buffer, size_t Size)
 {
     int result = 0;
-    fgets(Buffer, sizeof(Buffer), stdin);
+    fgets(Buffer, Size, stdin);
     if (Buffer[0] != '\n' && Buffer[0] != ' ' && 2 < strlen(Buffer))
     {
         Buffer[strcspn(Buffer, "\n")] = '\0';

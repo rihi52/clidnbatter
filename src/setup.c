@@ -15,7 +15,8 @@
  *========================================================================*
  */
 static void vCliDC_Setup_ScenarioMenu();
-static void vCliDC_Setup_AddRemovePlayers();
+static int CliDC_Setup_CreateScenario();
+static void vCliDC_Setup_AddRemovePlayers(int ScenarioID);
 static void vCliDC_Setup_DisplayScenarios();
 
 /*========================================================================*
@@ -31,6 +32,8 @@ static char monsters[MONSTER_BUFFER];
  */
 static void vCliDC_Setup_ScenarioMenu()
 {
+    int ScenarioID;
+    ScenarioID = CliDC_Setup_CreateScenario();
     int loop = 1;
     while (1 == loop)
     {
@@ -62,7 +65,7 @@ static void vCliDC_Setup_ScenarioMenu()
         switch (choice[0])
         {
             case 'p':
-                vCliDC_Setup_AddRemovePlayers();
+                vCliDC_Setup_AddRemovePlayers(ScenarioID);
                 break;
 
             case 'm':
@@ -80,9 +83,56 @@ static void vCliDC_Setup_ScenarioMenu()
     }
 }
 
-static void vCliDC_Setup_AddRemovePlayers()
+static int CliDC_Setup_CreateScenario()
 {
-    char prompt[10];
+    char ScenarioName[INPUT_BUFFER_BYTE];
+    int rc, id;
+    memset(ScenarioName, '\0', sizeof(ScenarioName));
+    sqlite3_stmt *stmt = NULL;
+    printf("\nEnter Scenario Name: ");
+
+    if (0 != giCliDC_Global_GetInput(ScenarioName, INPUT_BUFFER_BYTE))
+    {
+        return 1;
+    }
+    /* TODO: Check scenario name doesn't already exist */
+    const char *sql = "INSERT INTO scenarios (name) VALUES (?);";
+
+    stmt = CliDC_Modify_PrepareAndBind(sql, ScenarioName);
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE)
+    {
+        fprintf(stderr, "INSERT failed: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return -1;
+    }
+
+    sqlite3_finalize(stmt);
+
+    const char *sql2 = "SELECT id FROM scenarios WHERE name = ?;";
+
+    stmt = CliDC_Modify_PrepareAndBind(sql2, ScenarioName);
+
+    rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW)
+    {
+        id = sqlite3_column_int(stmt, 0); // Get the `id`
+    }
+    else
+    {
+        fprintf(stderr, "Failed to retrieve scenario ID: %s\n", sqlite3_errmsg(pMonsterDb));
+    }
+
+    id = sqlite3_column_int(stmt, 0);
+
+    sqlite3_finalize(stmt);
+
+    return id;
+}
+
+static void vCliDC_Setup_AddRemovePlayers(int ScenarioID)
+{
+    char prompt[SMALL_BUFFER_BYTE];
 
     printf("\n** Player Menu **\n");    
 
@@ -90,137 +140,127 @@ static void vCliDC_Setup_AddRemovePlayers()
     char endchar = ' ';
     int length, startPosition = 0, loop = 0;
 
-    /* Loop to acquire player information
-     * Two loop statuses so the user input functions can be returned to if needed */
-    while (0 == loop || 1 == loop)
+    /* Add new players if desired */
+    do /* Keep asking if 'y' for yes or 'n' for no isn't entered */
     {
-        //startPosition = 0;
-        if (0 == loop)
+        printf("Do you wish to add or remove players (a/r)?: ");
+        fgets(prompt, sizeof(prompt), stdin);
+    } while (strlen(prompt) != 1 && ('a' != prompt[0] && 'r' != prompt[0] && 'x' != prompt[0]));
+
+    /* If statment to add or remove players - NEEDS optimized TODO */
+    if ('a' == prompt[0] && '\n' == prompt[1])
+    {
+        /* Add players TODO: check player isn't already in scenario first */
+        while (0 != CliDC_Combat_ChoosePlayers(players, CHARACTER_BUFFER))
         {
-            startPosition = 0;
-            /* Add new players if desired */
-            do /* Keep asking if 'y' for yes or 'n' for no isn't entered */
+            /* Return to home menu if 'x' entered */
+            return;
+        }
+        length = strlen(players);
+
+        while (0 == loop || 1 == loop)
+        {
+            loop = 1;
+
+            memset(namePlayers, '\0', sizeof(namePlayers));
+            int nameIndex = 0;
+            /* Read the inputted players into players[] one at a time */
+            for (int i = startPosition; i <= length; i++)
             {
-                printf("Do you wish to add or remove players (a/r)?: ");
-                fgets(prompt, sizeof(prompt), stdin);
-            } while (strlen(prompt) != 1 && ('a' != prompt[0] && 'r' != prompt[0] && 'x' != prompt[0]));
-
-            /* If statment to add or remove players - NEEDS optimized TODO */
-            if ('a' == prompt[0] && '\n' == prompt[1])
-            {   /* Add players TODO */
-                while (0 != CliDC_Combat_ChoosePlayers(players, CHARACTER_BUFFER))
+                if (players[i] != ',' && players[i] != '\n')
                 {
-                    /* Return to home menu if 'x' entered */
-                    return;
-                }
-                length = strlen(players);
-                loop = 1;
-
-                memset(namePlayers, '\0', sizeof(namePlayers));
-                int nameIndex = 0;
-                /* Read the inputted players into players[] one at a time */
-                for (int i = startPosition; i <= length; i++)
-                {
-                    if (players[i] != ',' && players[i] != '\n')
+                    if (nameIndex < CHARACTER_BUFFER)
                     {
-                        if (nameIndex < CHARACTER_BUFFER)
-                        {
-                            namePlayers[nameIndex] = players[i];
-                            nameIndex++;
-                        }
+                        namePlayers[nameIndex] = players[i];
+                        nameIndex++;
                     }
-                    else
-                    {
-                        endchar = players[i];
-                        startPosition = i + 1;
-                        break;
-                    }
-                }
-                /* Null terminate player's name */
-                namePlayers[nameIndex] = '\0';
-
-                if ('\0' != namePlayers[0])
-                {
-                    // TODO: Add chosen players to scenario in db
                 }
                 else
                 {
-                    loop = 0;
-                    continue;
+                    endchar = players[i];
+                    startPosition = i + 1;
+                    break;
                 }
-
             }
-            else if('r' == prompt[0] && '\n' == prompt[1])
-            {   /* Remove players TODO */
-                while (0 != CliDC_Combat_ChoosePlayers(players, CHARACTER_BUFFER))
-                {
-                    /* Return to home menu if 'x' entered */
-                    return;
-                }
-                length = strlen(players);
-                loop = 1;
+            /* Null terminate player's name */
+            namePlayers[nameIndex] = '\0';
 
-                memset(namePlayers, '\0', sizeof(namePlayers));
-                int nameIndex = 0;
-                /* Read the inputted players into players[] one at a time */
-                for (int i = startPosition; i <= length; i++)
-                {
-                    if (players[i] != ',' && players[i] != '\n')
-                    {
-                        if (nameIndex < CHARACTER_BUFFER)
-                        {
-                            namePlayers[nameIndex] = players[i];
-                            nameIndex++;
-                        }
-                    }
-                    else
-                    {
-                        endchar = players[i];
-                        startPosition = i + 1;
-                        break;
-                    }
-                }
-                /* Null terminate player's name */
-                namePlayers[nameIndex] = '\0';
+            if ('\0' != namePlayers[0])
+            {
+                // Add chosen players to scenario in db, 1 for player character
+                gvCliDC_Modify_ScenarioAddPlayers(namePlayers, 1, ScenarioID);
+            }
+            else
+            {
+                loop = 0;
+                continue;
+            }
 
-                if ('\0' != namePlayers[0])
+            if (endchar == '\n')
+            {
+                loop = 2;
+                break;
+            }            
+        }
+    }
+    else if('r' == prompt[0] && '\n' == prompt[1])
+    {
+        /* Remove players */
+        while (0 != CliDC_Combat_ChoosePlayers(players, CHARACTER_BUFFER))
+        {
+            /* Return to home menu if 'x' entered */
+            return;
+        }
+        length = strlen(players);
+
+        while (0 == loop || 1 == loop)
+        {
+            loop = 1;
+
+            memset(namePlayers, '\0', sizeof(namePlayers));
+            int nameIndex = 0;
+            /* Read the inputted players into players[] one at a time */
+            for (int i = startPosition; i <= length; i++)
+            {
+                if (players[i] != ',' && players[i] != '\n')
                 {
-                    // TODO: Remove chosen players scenario in db
+                    if (nameIndex < CHARACTER_BUFFER)
+                    {
+                        namePlayers[nameIndex] = players[i];
+                        nameIndex++;
+                    }
                 }
                 else
                 {
-                    loop = 0;
-                    continue;
+                    endchar = players[i];
+                    startPosition = i + 1;
+                    break;
                 }
+            }
+            /* Null terminate player's name */
+            namePlayers[nameIndex] = '\0';
 
+            if ('\0' != namePlayers[0])
+            {
+                // Remove chosen players to scenario in db, 1 for player character
+                gvCliDC_Modify_ScenarioRemovePlayers(namePlayers, ScenarioID);
+            }
+            else
+            {
+                loop = 0;
+                continue;
             }
 
+            if (endchar == '\n')
+            {
+                loop = 2;
+                break;
+            }            
         }
-
-        
-
-        /* If there is no name do not attempt to create a player struct and restart loop */
-        
-
-        if (newPlayer == NULL)
-        {
-            printf("Please re-enter players' names or enter 'x' to return to home\n\n");
-            loop = 0;
-            continue;
-        }
-        vCliDC_Combat_SetInitiative(newPlayer);
-        if (endchar == '\n')
-        {
-            loop = 2;
-            break;
-        }
-    } 
-
-    
-    
-    /* Skips if statement and returns if 'x' is chosen */
+    }
     return;
-}
+}        
+    
 
 static void vCliDC_Setup_DisplayScenarios()
 {   
