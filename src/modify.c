@@ -565,7 +565,7 @@ int giCliDC_Modify_NewPlayer(char *Name, int16_t Ac, int16_t Hp)
 }
 
 /* Scenario Functions */
-void gvCliDC_Modify_ScenarioAddPlayers(char *Name, int Quantity, int ScenarioID)
+void gvCliDC_Modify_ScenarioAddParticipant(char *Name, int Quantity, int ScenarioID)
 {
     sqlite3_stmt *stmt = NULL;
     int rc;
@@ -618,7 +618,7 @@ void gvCliDC_Modify_ScenarioAddPlayers(char *Name, int Quantity, int ScenarioID)
     return;
 }
 
-void gvCliDC_Modify_ScenarioRemovePlayers(char *Name, int ScenarioID)
+void gvCliDC_Modify_ScenarioRemoveParticipant(char *Name, int ScenarioID)
 {
     sqlite3_stmt *stmt = NULL;
     int rc;

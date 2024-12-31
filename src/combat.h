@@ -27,4 +27,5 @@ typedef struct part{
 
 void gvCliDC_Combat_Main(void);
 int CliDC_Combat_ChoosePlayers(char *ChosenPlayers, size_t size);
+int CliDC_Combat_ChooseMonstsers(char *ChosenPlayers, size_t size);
 #endif  /*combat.h*/

@@ -8,7 +8,7 @@ static void vCliDC_Combat_MainLoop();
 static void vCliDC_Combat_PlayerSetUp();
 // static int CliDC_Combat_ChoosePlayers();
 static part *vCliDC_Combat_CreatePlayer(char *name);
-static int CliDC_Combat_ChooseMonstsers();
+// static int CliDC_Combat_ChooseMonstsers();
 static part *vCliDC_Combat_CreateMonster(char *name);
 
 static void vCliDC_Combat_SetInitiative(struct part *person);
@@ -102,18 +102,18 @@ static part *vCliDC_Combat_CreatePlayer(char *name)
     return new;
 }
 
-static int CliDC_Combat_ChooseMonstsers()
+int CliDC_Combat_ChooseMonstsers(char *ChosenMonsters, size_t size)
 {
     while (1)
     {
         printf("\nPlease enter desired monsters from db separated only by commas (eg. orc,animated armor,magmin): ");
-        fgets(monsters, sizeof(monsters), stdin);
-        if (monsters[0] == '\n' && monsters[0] == ' ')
+        fgets(ChosenMonsters, size, stdin);
+        if (ChosenMonsters[0] == '\n' && ChosenMonsters[0] == ' ')
         {
             printf("Error: Input blank. Try again or enter x to quit.\n");
             continue;
         }
-        else if (monsters[0] == 'x' && monsters[1] == '\n')
+        else if (ChosenMonsters[0] == 'x' && ChosenMonsters[1] == '\n')
         {   /* Return to home menu if 'x' entered */
             return 6;
         }
@@ -643,9 +643,14 @@ void gvCliDC_Combat_Main(void)
     printf("\n**** End acquiring player character information ****\n");
     printf("\n**** Begin acquiring enemy information ****\n");
 
-    while (0 != CliDC_Combat_ChooseMonstsers())
+    int input = 1;
+    while (0 != input)
     {
-        CliDC_Combat_ChooseMonstsers();
+        input = CliDC_Combat_ChooseMonstsers(monsters, CHARACTER_BUFFER);
+        if (X_INPUT_DETECTED == input)
+        {
+            return;
+        }        
     }
 
     char nameMonsters[MONSTER_BUFFER];

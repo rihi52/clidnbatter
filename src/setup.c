@@ -17,6 +17,7 @@
 static void vCliDC_Setup_ScenarioMenu();
 static int CliDC_Setup_CreateScenario();
 static void vCliDC_Setup_AddRemovePlayers(int ScenarioID);
+static void vCliDC_Setup_AddRemoveMonsters(int ScenarioID);
 static void vCliDC_Setup_DisplayScenarios();
 
 /*========================================================================*
@@ -69,7 +70,7 @@ static void vCliDC_Setup_ScenarioMenu()
                 break;
 
             case 'm':
-                
+                vCliDC_Setup_AddRemoveMonsters(ScenarioID);
                 break;
             
             case 'x':
@@ -132,15 +133,12 @@ static int CliDC_Setup_CreateScenario()
 
 static void vCliDC_Setup_AddRemovePlayers(int ScenarioID)
 {
-    char prompt[SMALL_BUFFER_BYTE];
-
-    printf("\n** Player Menu **\n");    
+    char prompt[SMALL_BUFFER_BYTE];   
 
     char namePlayers[CHARACTER_BUFFER];
     char endchar = ' ';
     int length, startPosition = 0, loop = 0;
 
-    /* Add new players if desired */
     do /* Keep asking if 'y' for yes or 'n' for no isn't entered */
     {
         printf("Do you wish to add or remove players (a/r)?: ");
@@ -188,7 +186,7 @@ static void vCliDC_Setup_AddRemovePlayers(int ScenarioID)
             if ('\0' != namePlayers[0])
             {
                 // Add chosen players to scenario in db, 1 for player character
-                gvCliDC_Modify_ScenarioAddPlayers(namePlayers, 1, ScenarioID);
+                gvCliDC_Modify_ScenarioAddParticipant(namePlayers, 1, ScenarioID);
             }
             else
             {
@@ -243,7 +241,7 @@ static void vCliDC_Setup_AddRemovePlayers(int ScenarioID)
             if ('\0' != namePlayers[0])
             {
                 // Remove chosen players to scenario in db, 1 for player character
-                gvCliDC_Modify_ScenarioRemovePlayers(namePlayers, ScenarioID);
+                gvCliDC_Modify_ScenarioRemoveParticipant(namePlayers, ScenarioID);
             }
             else
             {
@@ -259,7 +257,197 @@ static void vCliDC_Setup_AddRemovePlayers(int ScenarioID)
         }
     }
     return;
-}        
+}
+
+static void vCliDC_Setup_AddRemoveMonsters(int ScenarioID)
+{
+    char prompt[SMALL_BUFFER_BYTE]; 
+    char nameMonsters[MONSTER_BUFFER];
+    char endchar = ' ';
+    int length, startPosition = 0, loop = 0, input = 1;
+    int MonsterQty;
+
+    do /* Keep asking if 'y' for yes or 'n' for no isn't entered */
+    {
+        printf("Do you wish to add or remove monsters (a/r)?: ");
+        fgets(prompt, sizeof(prompt), stdin);
+    } while (strlen(prompt) != 1 && ('a' != prompt[0] && 'r' != prompt[0] && 'x' != prompt[0]));
+
+    if ('a' == prompt[0] && '\n' == prompt[1])
+    {
+        while (0 != input)
+        {
+            input = CliDC_Combat_ChooseMonstsers(monsters, CHARACTER_BUFFER);
+            if (X_INPUT_DETECTED == input)
+            {
+                return;
+            }        
+        }
+
+        endchar = ' ';
+        length = strlen(monsters);
+        startPosition = 0;
+
+        while (0 == loop || 1 == loop)
+        {
+            loop = 1;
+            memset(nameMonsters, '\0', sizeof(nameMonsters));
+            int nameIndex = 0;
+            for (int i = startPosition; i <= length; i++)
+            {
+                if (monsters[i] != ',' && monsters[i] != '\n')
+                {
+                    if (nameIndex < CHARACTER_BUFFER)
+                    {
+                        nameMonsters[nameIndex] = monsters[i];
+                        nameIndex++;
+                    }
+                }
+                else
+                {
+                    endchar = monsters[i];
+                    startPosition = i + 1;
+                    break;
+                }
+            }
+            nameMonsters[nameIndex] = '\0';
+            printf("How many %s: ", nameMonsters);
+            
+            gvCliDC_Global_CheckIntegerInputs(&MonsterQty);
+
+            if ('\0' != nameMonsters[0])
+            {
+                // Remove chosen players to scenario in db, 1 for player character
+                gvCliDC_Modify_ScenarioAddParticipant(nameMonsters, MonsterQty, ScenarioID);
+                
+                // TODO - Don't store initiative spot in DB, figure that out when the scenario is launched
+                gvCliDC_Modify_ScenarioAddInitiative(nameMonsters, Initative, InitiativeSpot);
+            }
+            else
+            {
+                loop = 0;
+                continue;
+            }
+
+            if (endchar == '\n')
+            {
+                loop = 2;
+                break;
+            }
+        }
+    }
+    else if('r' == prompt[0] && '\n' == prompt[1])
+    {
+        /* Remove monster */
+        while (0 != input)
+        {
+            input = CliDC_Combat_ChooseMonstsers(monsters, CHARACTER_BUFFER);
+            if (X_INPUT_DETECTED == input)
+            {
+                return;
+            }        
+        }
+        length = strlen(monsters);
+
+        while (0 == loop || 1 == loop)
+        {
+            loop = 1;
+
+            memset(nameMonsters, '\0', sizeof(nameMonsters));
+            int nameIndex = 0;
+            /* Read the inputted monsters into monsters[] one at a time */
+            for (int i = startPosition; i <= length; i++)
+            {
+                if (monsters[i] != ',' && monsters[i] != '\n')
+                {
+                    if (nameIndex < CHARACTER_BUFFER)
+                    {
+                        nameMonsters[nameIndex] = monsters[i];
+                        nameIndex++;
+                    }
+                }
+                else
+                {
+                    endchar = monsters[i];
+                    startPosition = i + 1;
+                    break;
+                }
+            }
+            /* Null terminate monster's name */
+            nameMonsters[nameIndex] = '\0';
+
+            if ('\0' != nameMonsters[0])
+            {
+                // Remove chosen monsters to scenario in db, 1 for monster character
+                gvCliDC_Modify_ScenarioRemoveParticipant(nameMonsters, ScenarioID);
+            }
+            else
+            {
+                loop = 0;
+                continue;
+            }
+
+            if (endchar == '\n')
+            {
+                loop = 2;
+                break;
+            }            
+        }
+    }
+}
+
+// TODO
+// static void vCliDC_Setup_StoreInitiative(struct part *person)
+// {
+//     /* Initiative instructions with extra spacing for clarity */
+//     printf("\n** Initiative must be between 0 and 29, inclusive **\n\n");
+
+//     int check = 1;
+//     char buffer[10];
+//     char *endptr;
+//     while (check == 1)
+//     {
+//         printf("%s's initiative: ", person->name);
+//         fgets(buffer, sizeof(buffer), stdin);
+
+//         /* Convert input to number and assign to struct */
+//         person->initiative = strtol(buffer, &endptr, 10);
+//         if (endptr == buffer || (*endptr != '\0' && *endptr != '\n'))
+//         {
+//             /* Check input is within given bounds and is a number */
+//             printf("Error: initiative is out of bounds\n");
+//             continue;
+//         }
+
+//         if (INITIATIVE_SPREAD > person->initiative && 0 <= person->initiative)
+//         {
+//             /* Break out of loop if input is in bounds */
+//             check = 0;
+//         }
+//         else
+//         {
+//             printf("Error: initiative is out of bounds\n");
+//         }
+//     }
+
+//     part *temp = person->next;
+//     int count = 1;
+//     while (NULL != temp)
+//     {
+//         temp->initiative = person->initiative;
+//         temp = temp->next;
+//         count++;
+//     }
+
+//     if (0 != person->initiative)
+//     {
+//         numCombatants += count;
+//     }
+
+//     /* 1 for a single unique combatant - should #define */
+//     vCliDC_Combat_AddToInitiativeOrder(person);
+//     return;
+// }
     
 
 static void vCliDC_Setup_DisplayScenarios()

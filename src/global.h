@@ -13,7 +13,9 @@
  */
 #define CHARACTER_BUFFER_BYTE   100
 #define SMALL_BUFFER_BYTE       10
-#define INPUT_BUFFER_BYTE    50
+#define INPUT_BUFFER_BYTE       50
+
+#define X_INPUT_DETECTED        6
 
 extern sqlite3 *pMonsterDb;
 
