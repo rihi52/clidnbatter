@@ -663,6 +663,93 @@ void gvCliDC_Modify_ScenarioRemoveParticipant(char *Name, int ScenarioID)
     return;
 }
 
+void gvCliDC_Modify_ScenarioAddInitiative(char *Name, int Initiative, int ScenarioID)
+{
+    int rc;
+    sqlite3_stmt *stmt = NULL;
+
+    const char *sql = "SELECT id FROM participants WHERE name = ? AND scenarioid = ?";
+
+    rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        return;
+    }
+
+    rc = sqlite3_bind_text(stmt, 1, Name, -1, SQLITE_STATIC);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind name: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return;
+    }
+
+    rc = sqlite3_bind_int(stmt, 2, ScenarioID);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind HP: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return;
+    }
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_ROW)
+    {
+        fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        return;
+    }
+
+    int ParticipantID = sqlite3_column_int(stmt, 0);
+    sqlite3_finalize(stmt);
+
+    // Step 2: Insert the initiative for the participant
+    const char *sql2 = "INSERT INTO initiatives (partid, initiative, scenarioid) VALUES (?, ?, ?)";
+
+    rc = sqlite3_prepare_v2(pMonsterDb, sql2, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to prepare statement (Step 2): %s\n", sqlite3_errmsg(pMonsterDb));
+        return;
+    }
+
+    rc = sqlite3_bind_int(stmt, 1, ParticipantID);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind participant ID (Step 2): %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return;
+    }
+
+    rc = sqlite3_bind_int(stmt, 2, Initiative);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind Initiative (Step 2): %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return;
+    }
+
+    rc = sqlite3_bind_int(stmt, 3, ScenarioID);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind ScenarioID (Step 2): %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return;
+    }
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE)
+    {
+        fprintf(stderr, "Failed to execute INSERT statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return;
+    }
+
+    printf("Initiative added successfully for participant ID %d.\n", ParticipantID);
+    sqlite3_finalize(stmt);
+    return;
+}
+
 /* Start DUPE in lookup - move to global? TODO */
 sqlite3_stmt *CliDC_Modify_PrepareAndBind(const char *sql, const char *BindValue)
 {

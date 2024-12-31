@@ -56,6 +56,7 @@ void gvCliDC_Global_CheckIntegerInputs(int *numberOf)
             continue;
         }
     }
+    return;
 }
 
 int giCliDC_Global_GetInput(char *Buffer, size_t Size)

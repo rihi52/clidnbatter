@@ -319,9 +319,10 @@ static void vCliDC_Setup_AddRemoveMonsters(int ScenarioID)
             {
                 // Remove chosen players to scenario in db, 1 for player character
                 gvCliDC_Modify_ScenarioAddParticipant(nameMonsters, MonsterQty, ScenarioID);
-                
-                // TODO - Don't store initiative spot in DB, figure that out when the scenario is launched
-                gvCliDC_Modify_ScenarioAddInitiative(nameMonsters, Initative, InitiativeSpot);
+                int Initiative;
+                printf("\n%s's initiative: ", nameMonsters);
+                gvCliDC_Global_CheckIntegerInputs(&Initiative);
+                gvCliDC_Modify_ScenarioAddInitiative(nameMonsters, Initiative, ScenarioID);
             }
             else
             {
