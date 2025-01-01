@@ -1,7 +1,5 @@
 #include "lookup.h"
 
-
-
 /*========================================================================*
  *  SECTION - Local definitions
  *========================================================================*
@@ -23,7 +21,6 @@ void vCliDC_Lookup_MonsterSize();
 void vCliDC_Lookup_MonsterCr();
 void vCliDC_Lookup_MonsterType();
 int iCliDC_Lookup_GetInput(char *buffer);
-sqlite3_stmt *CliDC_Lookup_PrepareAndBind(const char *sql, const char *BindValue);
 void vCliDC_Lookup_PrintDbContents(sqlite3_stmt *stmt, char *buffer);
 
 /*========================================================================*
@@ -114,7 +111,7 @@ void vCliDC_Lookup_MonsterCr()
 
     const char *sql = "SELECT id, name, type, size, cr, hp, ac FROM monsters WHERE cr = ?";
 
-    stmt = CliDC_Lookup_PrepareAndBind(sql, buffer);
+    stmt = CliDC_Global_PrepareAndBindText(sql, buffer);
 
     vCliDC_Lookup_PrintDbContents(stmt, buffer);
 
@@ -151,7 +148,7 @@ void vCliDC_Lookup_MonsterName()
     char searchPattern[CHARACTER_BUFFER_BYTE + 10];
     snprintf(searchPattern, sizeof(searchPattern), "%%%s%%", monsters);
 
-    stmt = CliDC_Lookup_PrepareAndBind(sql, searchPattern);
+    stmt = CliDC_Global_PrepareAndBindText(sql, searchPattern);
 
     vCliDC_Lookup_PrintDbContents(stmt, searchPattern);
 
@@ -189,7 +186,7 @@ void vCliDC_Lookup_MonsterType()
     char searchPattern[CHARACTER_BUFFER_BYTE + 10];
     snprintf(searchPattern, sizeof(searchPattern), "%%%s%%", types);
 
-    stmt = CliDC_Lookup_PrepareAndBind(sql, searchPattern);
+    stmt = CliDC_Global_PrepareAndBindText(sql, searchPattern);
 
     vCliDC_Lookup_PrintDbContents(stmt, searchPattern);
 
@@ -227,7 +224,7 @@ void vCliDC_Lookup_MonsterSize()
     char searchPattern[CHARACTER_BUFFER_BYTE + 10];
     snprintf(searchPattern, sizeof(searchPattern), "%%%s%%", Sizes);
 
-    stmt = CliDC_Lookup_PrepareAndBind(sql, searchPattern);
+    stmt = CliDC_Global_PrepareAndBindText(sql, searchPattern);
 
     vCliDC_Lookup_PrintDbContents(stmt, searchPattern);
 
@@ -261,7 +258,7 @@ void vCliDC_Lookup_MonsterAc()
 
     const char *sql = "SELECT id, name, type, size, cr, hp, ac FROM monsters WHERE ac = ?";
 
-    stmt = CliDC_Lookup_PrepareAndBind(sql, buffer);
+    stmt = CliDC_Global_PrepareAndBindText(sql, buffer);
 
     vCliDC_Lookup_PrintDbContents(stmt, buffer);
 
@@ -286,39 +283,15 @@ int iCliDC_Lookup_GetInput(char *buffer)
     return result;
 }
 
-sqlite3_stmt *CliDC_Lookup_PrepareAndBind(const char *sql, const char *BindValue)
-{
-    sqlite3_stmt *stmt = NULL;
-    int rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
-    if (rc != SQLITE_OK)
-    {
-        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
-        sqlite3_close(pMonsterDb);
-        return NULL;
-    }
-
-    rc = sqlite3_bind_text(stmt, 1, BindValue, -1, SQLITE_TRANSIENT);
-    if (rc != SQLITE_OK)
-    {
-        fprintf(stderr, "Failed to bind AC: %s\n", sqlite3_errmsg(pMonsterDb));
-        sqlite3_finalize(stmt);
-        return NULL;
-    }
-
-    return stmt;
-}
-
 void vCliDC_Lookup_PrintDbContents(sqlite3_stmt *stmt, char *buffer)
 {
-    int rc;
+    int rc, found = 0;
 
     /* Print table header */
     printf("-------------------------------------------------------------------------------------------------\n");
     printf("| ID | Name                      |               Type               |    SIZE    | CR | HP | AC |\n");
     printf("-------------------------------------------------------------------------------------------------\n");
 
-    int found = 0;
-    /* Chatgpt used to learn how to do this step with SQLite API */
     /* Print columns from database as rows in table */
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
     {
@@ -336,13 +309,13 @@ void vCliDC_Lookup_PrintDbContents(sqlite3_stmt *stmt, char *buffer)
         printf("|%-3d | %-25s | %-32s | %-10s | %-2s | %-3d| %-2d |\n", id, name, type, size, cr, hp, ac);
     }
 
-    if (!found)
-    {
-        printf("No monsters found with CR = %s.\n", buffer);
-    }
-
     /* End table */
     printf("-------------------------------------------------------------------------------------------------\n");
+
+    if (0 == found)
+    {
+        printf("Lookup value %s not found.\n", buffer);
+    }
 
     if (rc != SQLITE_DONE) {
         fprintf(stderr, "Error during iteration: %s\n", sqlite3_errmsg(pMonsterDb));
@@ -383,7 +356,7 @@ int giCliDC_Lookup_PlayerAc(char *Name)
 
     const char *sql = "SELECT ac FROM players WHERE name IS ? COLLATE NOCASE";
 
-    stmt = CliDC_Lookup_PrepareAndBind(sql, Name);
+    stmt = CliDC_Global_PrepareAndBindText(sql, Name);
 
     if (sqlite3_step(stmt) != SQLITE_ROW)
     {
@@ -406,7 +379,7 @@ int giCliDC_Lookup_PlayerHp(char *Name)
 
     const char *sql = "SELECT hp FROM players WHERE name IS ? COLLATE NOCASE";
 
-    stmt = CliDC_Lookup_PrepareAndBind(sql, Name);
+    stmt = CliDC_Global_PrepareAndBindText(sql, Name);
 
     if (sqlite3_step(stmt) != SQLITE_ROW)
     {

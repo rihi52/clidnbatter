@@ -24,6 +24,7 @@ extern sqlite3 *pMonsterDb;
  *========================================================================* 
  */
 void gvCliDC_Global_CheckIntegerInputs(int *numberOf);
-int giCliDC_Global_GetInput(char *Buffer, size_t Size);
+int giCliDC_Global_GetTextInput(char *Buffer, size_t Size);
+sqlite3_stmt *CliDC_Global_PrepareAndBindText(const char *sql, const char *BindValue);
 
 #endif /* gloabl.h */

@@ -4,6 +4,10 @@
  *  SECTION - Local definitions
  *========================================================================*
  */
+#define PLAYER  0
+#define MONSTER 1
+#define ADD     0
+#define REMOVE  1
 
 /*========================================================================*
  *  SECTION - External variables that cannot be defined in header files   *
@@ -18,6 +22,7 @@ static void vCliDC_Setup_ScenarioMenu();
 static int CliDC_Setup_CreateScenario();
 static void vCliDC_Setup_AddRemovePlayers(int ScenarioID);
 static void vCliDC_Setup_AddRemoveMonsters(int ScenarioID);
+static void vCliDC_Setup_ParseParticipants(int length, int ScenarioID, int Selector, int Indicator);
 static void vCliDC_Setup_DisplayScenarios();
 
 /*========================================================================*
@@ -88,18 +93,33 @@ static int CliDC_Setup_CreateScenario()
 {
     char ScenarioName[INPUT_BUFFER_BYTE];
     int rc, id;
-    memset(ScenarioName, '\0', sizeof(ScenarioName));
     sqlite3_stmt *stmt = NULL;
-    printf("\nEnter Scenario Name: ");
 
-    if (0 != giCliDC_Global_GetInput(ScenarioName, INPUT_BUFFER_BYTE))
+    memset(ScenarioName, '\0', sizeof(ScenarioName));
+
+    while (1)
     {
-        return 1;
+        printf("\nEnter Scenario Name: ");
+        int input = giCliDC_Global_GetTextInput(ScenarioName, INPUT_BUFFER_BYTE);
+        if (input == 1)
+        {
+            continue;
+        }
+        else if (input == 2)
+        {
+            return -1;
+        }
+        else
+        {
+            break;
+        }
     }
+
     /* TODO: Check scenario name doesn't already exist */
     const char *sql = "INSERT INTO scenarios (name) VALUES (?);";
 
-    stmt = CliDC_Modify_PrepareAndBind(sql, ScenarioName);
+    stmt = CliDC_Global_PrepareAndBindText(sql, ScenarioName);
+
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE)
     {
@@ -112,12 +132,12 @@ static int CliDC_Setup_CreateScenario()
 
     const char *sql2 = "SELECT id FROM scenarios WHERE name = ?;";
 
-    stmt = CliDC_Modify_PrepareAndBind(sql2, ScenarioName);
+    stmt = CliDC_Global_PrepareAndBindText(sql2, ScenarioName);
 
     rc = sqlite3_step(stmt);
     if (rc == SQLITE_ROW)
     {
-        id = sqlite3_column_int(stmt, 0); // Get the `id`
+        id = sqlite3_column_int(stmt, 0);
     }
     else
     {
@@ -156,50 +176,7 @@ static void vCliDC_Setup_AddRemovePlayers(int ScenarioID)
         }
         length = strlen(players);
 
-        while (0 == loop || 1 == loop)
-        {
-            loop = 1;
-
-            memset(namePlayers, '\0', sizeof(namePlayers));
-            int nameIndex = 0;
-            /* Read the inputted players into players[] one at a time */
-            for (int i = startPosition; i <= length; i++)
-            {
-                if (players[i] != ',' && players[i] != '\n')
-                {
-                    if (nameIndex < CHARACTER_BUFFER)
-                    {
-                        namePlayers[nameIndex] = players[i];
-                        nameIndex++;
-                    }
-                }
-                else
-                {
-                    endchar = players[i];
-                    startPosition = i + 1;
-                    break;
-                }
-            }
-            /* Null terminate player's name */
-            namePlayers[nameIndex] = '\0';
-
-            if ('\0' != namePlayers[0])
-            {
-                // Add chosen players to scenario in db, 1 for player character
-                gvCliDC_Modify_ScenarioAddParticipant(namePlayers, 1, ScenarioID);
-            }
-            else
-            {
-                loop = 0;
-                continue;
-            }
-
-            if (endchar == '\n')
-            {
-                loop = 2;
-                break;
-            }            
-        }
+        vCliDC_Setup_ParseParticipants(length, ScenarioID, PLAYER, ADD);
     }
     else if('r' == prompt[0] && '\n' == prompt[1])
     {
@@ -211,50 +188,7 @@ static void vCliDC_Setup_AddRemovePlayers(int ScenarioID)
         }
         length = strlen(players);
 
-        while (0 == loop || 1 == loop)
-        {
-            loop = 1;
-
-            memset(namePlayers, '\0', sizeof(namePlayers));
-            int nameIndex = 0;
-            /* Read the inputted players into players[] one at a time */
-            for (int i = startPosition; i <= length; i++)
-            {
-                if (players[i] != ',' && players[i] != '\n')
-                {
-                    if (nameIndex < CHARACTER_BUFFER)
-                    {
-                        namePlayers[nameIndex] = players[i];
-                        nameIndex++;
-                    }
-                }
-                else
-                {
-                    endchar = players[i];
-                    startPosition = i + 1;
-                    break;
-                }
-            }
-            /* Null terminate player's name */
-            namePlayers[nameIndex] = '\0';
-
-            if ('\0' != namePlayers[0])
-            {
-                // Remove chosen players to scenario in db, 1 for player character
-                gvCliDC_Modify_ScenarioRemoveParticipant(namePlayers, ScenarioID);
-            }
-            else
-            {
-                loop = 0;
-                continue;
-            }
-
-            if (endchar == '\n')
-            {
-                loop = 2;
-                break;
-            }            
-        }
+        vCliDC_Setup_ParseParticipants(length, ScenarioID, PLAYER, REMOVE);
     }
     return;
 }
@@ -395,6 +329,67 @@ static void vCliDC_Setup_AddRemoveMonsters(int ScenarioID)
             }            
         }
     }
+}
+
+static void vCliDC_Setup_ParseParticipants(int length, int ScenarioID, int Selector, int Indicator)
+{
+    char namePlayers[CHARACTER_BUFFER];
+    char endchar = ' ';
+    int startPosition = 0, loop = 0;
+
+    while (0 == loop)
+    {
+        memset(namePlayers, '\0', sizeof(namePlayers));    
+        int nameIndex = 0;
+        /* Read the inputted players into players[] one at a time */
+        for (int i = startPosition; i <= length; i++)
+        {
+            if (players[i] != ',' && players[i] != '\n')
+            {
+                if (nameIndex < CHARACTER_BUFFER)
+                {
+                    namePlayers[nameIndex] = players[i];
+                    nameIndex++;
+                }
+            }
+            else
+            {
+                endchar = players[i];
+                startPosition = i + 1;
+                break;
+            }
+        }
+        /* Null terminate player's name */
+        namePlayers[nameIndex] = '\0';
+
+        if ('\0' != namePlayers[0])
+        {
+            // Add chosen players to scenario in db, 1 for player character
+            
+            if (PLAYER == Selector)
+            {
+                if (ADD == Indicator)
+                {
+                    gvCliDC_Modify_ScenarioAddParticipant(namePlayers, 1, ScenarioID);
+                }
+                else
+                {
+                    gvCliDC_Modify_ScenarioRemoveParticipant(namePlayers, ScenarioID);
+                }                
+            }            
+        }
+        else
+        {
+            loop = 0;
+            continue;         
+        }
+
+        if (endchar == '\n')
+        {
+            loop = 2;
+        }
+    }
+    return;
 }
 
 // TODO

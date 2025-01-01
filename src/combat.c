@@ -582,7 +582,8 @@ void gvCliDC_Combat_Main(void)
             startPosition = 0;
             /* Add new players if desired */
             vCliDC_Combat_PlayerSetUp();
-            /* Choose existing players and make sure there are no invalid characters */
+            /* Choose existing players and make sure there are no invalid characters 
+             * Don't use Global_GetInput to allow spaces in player names */
             while (0 != CliDC_Combat_ChoosePlayers(players, CHARACTER_BUFFER))
             {
                 /* Return to home menu if 'x' entered */
@@ -602,7 +603,7 @@ void gvCliDC_Combat_Main(void)
                 if (nameIndex < CHARACTER_BUFFER)
                 {
                     namePlayers[nameIndex] = players[i];
-                    nameIndex++;
+                    nameIndex++;                    
                 }
             }
             else
@@ -632,7 +633,9 @@ void gvCliDC_Combat_Main(void)
             loop = 0;
             continue;
         }
+
         vCliDC_Combat_SetInitiative(newPlayer);
+
         if (endchar == '\n')
         {
             loop = 2;
@@ -750,6 +753,7 @@ void gvCliDC_Combat_Main(void)
 
 int CliDC_Combat_ChoosePlayers(char *ChosenPlayers, size_t size)
 {
+    int result = 0;
     while (1)
     {
         memset(ChosenPlayers, '\0', size);
@@ -762,12 +766,14 @@ int CliDC_Combat_ChoosePlayers(char *ChosenPlayers, size_t size)
         }
         else if (ChosenPlayers[0] == 'x' && ChosenPlayers[1] == '\n')
         {   /* Return to home menu if 'x' entered */
-            return 6;
+            result = 6;
+            break;
         }
         else
         {   /* Break out of loop if valid input */
+            result = 0;
             break;
         }
     }
-    return 0;
+    return result;
 }

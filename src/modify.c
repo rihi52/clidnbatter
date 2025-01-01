@@ -22,8 +22,6 @@ static void vCliDC_Modify_ChangePlayerName();
 static void vCliDC_Modify_ChangePlayerAC();
 static void vCliDC_Modify_ChangePlayerHP();
 
-// sqlite3_stmt *CliDC_Modify_PrepareAndBind(const char *sql, const char *BindValue);
-
 /*========================================================================*
  *  SECTION - Local variables                                             *
  *========================================================================*
@@ -41,7 +39,7 @@ static void vCliDC_Modify_DeletePlayer()
     {
         printf("\n** Delete Player **\n");
         printf("\nEnter name of Player to delete (not case-sensitive): ");
-        int input = giCliDC_Global_GetInput(Name, INPUT_BUFFER_BYTE);
+        int input = giCliDC_Global_GetTextInput(Name, INPUT_BUFFER_BYTE);
         if (input == 1)
         {
             continue;
@@ -166,7 +164,7 @@ static void vCliDC_Modify_ChangePlayerName()
     while (1)
     {
         printf("Enter name of Player to change name of (not case-sensitive): ");
-        int input = giCliDC_Global_GetInput(Name, INPUT_BUFFER_BYTE);
+        int input = giCliDC_Global_GetTextInput(Name, INPUT_BUFFER_BYTE);
         if (input == 1)
         {
             continue;
@@ -184,7 +182,7 @@ static void vCliDC_Modify_ChangePlayerName()
     while (1)
     {
         printf("Enter new name: ");
-        int input = giCliDC_Global_GetInput(NewName, INPUT_BUFFER_BYTE);
+        int input = giCliDC_Global_GetTextInput(NewName, INPUT_BUFFER_BYTE);
         if (input == 1)
         {
             continue;
@@ -250,7 +248,7 @@ static void vCliDC_Modify_ChangePlayerAC()
     while (1)
     {
         printf("Enter name of Player to change AC of (not case-sensitive): ");
-        int input = giCliDC_Global_GetInput(Name, INPUT_BUFFER_BYTE);
+        int input = giCliDC_Global_GetTextInput(Name, INPUT_BUFFER_BYTE);
         if (input == 1)
         {
             continue;
@@ -268,7 +266,7 @@ static void vCliDC_Modify_ChangePlayerAC()
     while (1)
     {
         printf("Enter new AC: ");
-        int input = giCliDC_Global_GetInput(NewAC, INPUT_BUFFER_BYTE);
+        int input = giCliDC_Global_GetTextInput(NewAC, INPUT_BUFFER_BYTE);
         if (input == 1)
         {
             continue;
@@ -334,7 +332,7 @@ static void vCliDC_Modify_ChangePlayerHP()
     while (1)
     {
         printf("Enter name of Player to change AC of (not case-sensitive): ");
-        int input = giCliDC_Global_GetInput(Name, INPUT_BUFFER_BYTE);
+        int input = giCliDC_Global_GetTextInput(Name, INPUT_BUFFER_BYTE);
         if (input == 1)
         {
             continue;
@@ -352,7 +350,7 @@ static void vCliDC_Modify_ChangePlayerHP()
     while (1)
     {
         printf("Enter new HP: ");
-        int input = giCliDC_Global_GetInput(NewHP, INPUT_BUFFER_BYTE);
+        int input = giCliDC_Global_GetTextInput(NewHP, INPUT_BUFFER_BYTE);
         if (input == 1)
         {
             continue;
@@ -749,27 +747,3 @@ void gvCliDC_Modify_ScenarioAddInitiative(char *Name, int Initiative, int Scenar
     sqlite3_finalize(stmt);
     return;
 }
-
-/* Start DUPE in lookup - move to global? TODO */
-sqlite3_stmt *CliDC_Modify_PrepareAndBind(const char *sql, const char *BindValue)
-{
-    sqlite3_stmt *stmt = NULL;
-    int rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
-    if (rc != SQLITE_OK)
-    {
-        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
-        sqlite3_close(pMonsterDb);
-        return NULL;
-    }
-
-    rc = sqlite3_bind_text(stmt, 1, BindValue, -1, SQLITE_TRANSIENT);
-    if (rc != SQLITE_OK)
-    {
-        fprintf(stderr, "Failed to bind AC: %s\n", sqlite3_errmsg(pMonsterDb));
-        sqlite3_finalize(stmt);
-        return NULL;
-    }
-
-    return stmt;
-}
-/* End DUPE in lookup - move to global? TODO */
