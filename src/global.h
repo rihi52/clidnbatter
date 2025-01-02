@@ -14,6 +14,8 @@
 #define CHARACTER_BUFFER_BYTE   100
 #define SMALL_BUFFER_BYTE       10
 #define INPUT_BUFFER_BYTE       50
+#define CHARACTER_BUFFER    250
+#define MONSTER_BUFFER      350
 
 #define X_INPUT_DETECTED        6
 

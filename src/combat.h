@@ -9,8 +9,6 @@
 #include <stdio.h>
 
 #define INITIATIVE_SPREAD   30
-#define CHARACTER_BUFFER    250
-#define MONSTER_BUFFER      350
 
 typedef struct part{
     char *name;
