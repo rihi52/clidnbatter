@@ -24,6 +24,9 @@ static void vCliDC_Setup_AddRemovePlayers(int ScenarioID);
 static void vCliDC_Setup_AddRemoveMonsters(int ScenarioID);
 static void vCliDC_Setup_ParseParticipants(int length, int ScenarioID, int Selector, int Indicator);
 static void vCliDC_Setup_DisplayScenarios();
+static void vCliDC_Setup_CountScenarios();
+static void vCliDC_Setup_DisplayContents();
+static void vCliDC_Setup_LaunchScenario();
 
 /*========================================================================*
  *  SECTION - Local variables                                             *
@@ -373,7 +376,115 @@ static void vCliDC_Setup_ParseParticipants(int length, int ScenarioID, int Selec
 static void vCliDC_Setup_DisplayScenarios()
 {   
     // TODO
+    // sqlite3_stmt *stmt = NULL;
+
+    // const char *sql = "SELECT COUNT(1) FROM scenarios";
+    vCliDC_Setup_CountScenarios();
+
     return;
+}
+
+static void vCliDC_Setup_CountScenarios()
+{
+    // TODO
+    sqlite3_stmt *stmt = NULL;
+
+    const char *sql = "SELECT COUNT(1) FROM scenarios";
+
+    int rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_close(pMonsterDb);
+        return;
+    }
+
+    int IDcount = sqlite3_column_int(stmt, 0);
+    sqlite3_finalize(stmt);
+
+    const char *sql2 = "SELECT id FROM scenarios";
+    int ScenarioIDs[IDcount];
+
+    rc = sqlite3_prepare_v2(pMonsterDb, sql2, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_close(pMonsterDb);
+        return;
+    }
+
+    int count = 0;
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+    {
+        ScenarioIDs[count] = sqlite3_column_int(stmt, 0);
+        count++;
+    }
+
+    sqlite3_finalize(stmt);
+
+    const char *sql3 = "SELECT id, name FROM scenarios";
+
+    /* Create an array of strings to hold the names of the scenarios. Use the highest scenarioid from the scenarios table to set the number of rows in the table.
+     * This will allow matching the name to the scenarioid by placing the name at the index that is its scenarioid. ScenarioIDs[count] here will always be the
+     * last scenarioid found, which will be the highest number in the sqlite table. This ensures you don't try and access non-existent memory */
+    char ScenarioNames[ScenarioIDs[count]][MONSTER_BUFFER];
+
+    rc = sqlite3_prepare_v2(pMonsterDb, sql3, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_close(pMonsterDb);
+        return;
+    }
+
+    /* Store names at [scenarioid] */
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+    {
+        strcopy(ScenarioNames[sqlite3_column_int(stmt, 0)], (const char *)sqlite3_column_text(stmt, 1));
+    }
+
+    sqlite3_finalize(stmt);
+    
+    /* Lookup in participants and initiatives based on scenarioid in ScenarioID array and then print
+     * Is this another function or in this function??  */
+
+    int qty, partID;
+    for (int i = 0; i < count; i++)
+    {
+        if (NULL != ScenarioNames[ScenarioIDs[i]])
+        {
+            printf("\n%s | ", ScenarioNames[ScenarioIDs[i]]);
+            for (int j = 0; j < 5; j++) // TODO: How do I make sure I get all the participants?? Just use more sql here instead of functions?
+            {
+                vCliDC_Lookup_FindParticipant(ScenarioIDs[i], &qty, &partID); // Pass through ScenarioIDs[i], &qty, and &partID
+                vCliDC_Lookup_FindInitiative(ScenarioIDs[i], partID); // Pass through ScenarioIDs[i] and partID
+            }
+        }
+    }
+
+    return;
+}
+
+static void vCliDC_Setup_DisplayContents()
+{
+    // TODO
+    return;
+}
+
+static void vCliDC_Setup_LaunchScenario()
+{
+    // int loop = 1;
+    // while (1 == loop)
+    // {
+    //     printf("\n*** Launch Scenario Menu ***\n");
+
+    //     printf("Which scenario would you like to launch?\n");
+
+    //     char choice[SMALL_BUFFER_BYTE];
+    //     memset(choice, '\0', sizeof(choice));
+    //     int check = 1;
+    // }
+    vCliDC_Setup_CountScenarios();
 }
 
 /*========================================================================*
@@ -422,7 +533,7 @@ void gvCliDC_Setup_Main()
                 break;
 
             case 'l':
-                
+                vCliDC_Setup_LaunchScenario();
                 break;
             
             case 'x':

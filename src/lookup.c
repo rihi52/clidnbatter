@@ -65,7 +65,7 @@ void vCliDC_Lookup_AllPlayers()
         int ac = sqlite3_column_int(stmt, 2);
         int hp = sqlite3_column_int(stmt, 3);
 
-        printf("|%-3d | %-30s | %-3d| %-2d |\n", id, name, hp, ac);
+        printf("|%-3d | %-30s | %-3d| %-2d |\n", id, name, ac, hp);
     }
 
     if (!found)
@@ -127,7 +127,7 @@ void vCliDC_Lookup_MonsterName()
     printf("\n*** Name lookup ***");
     while (1)
     {
-        printf("\nPlease enter Name of desired monster: ");
+        printf("\nSearch for desired monster (will return all matches): ");
         int input = iCliDC_Lookup_GetInput(monsters);
         if (input == 1)
         {
@@ -288,9 +288,9 @@ void vCliDC_Lookup_PrintDbContents(sqlite3_stmt *stmt, char *buffer)
     int rc, found = 0;
 
     /* Print table header */
-    printf("-------------------------------------------------------------------------------------------------\n");
-    printf("| ID | Name                      |               Type               |    SIZE    | CR | HP | AC |\n");
-    printf("-------------------------------------------------------------------------------------------------\n");
+    printf("--------------------------------------------------------------------------------------------------\n");
+    printf("| ID | Name                      |               Type               |    SIZE    |  CR | HP | AC |\n");
+    printf("--------------------------------------------------------------------------------------------------\n");
 
     /* Print columns from database as rows in table */
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
@@ -306,11 +306,11 @@ void vCliDC_Lookup_PrintDbContents(sqlite3_stmt *stmt, char *buffer)
 
         // TODO: FINISH ADDING SIZE TO QUERIES AND TABLE
 
-        printf("|%-3d | %-25s | %-32s | %-10s | %-2s | %-3d| %-2d |\n", id, name, type, size, cr, hp, ac);
+        printf("|%-3d | %-25s | %-32s | %-10s | %-3s | %-3d| %-2d |\n", id, name, type, size, cr, hp, ac);
     }
 
     /* End table */
-    printf("-------------------------------------------------------------------------------------------------\n");
+    printf("---------------------------------------------------------------------------------------------------\n");
 
     if (0 == found)
     {
