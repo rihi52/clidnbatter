@@ -399,6 +399,15 @@ static void vCliDC_Setup_CountScenarios()
         return;
     }
 
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_ROW)
+    {
+        fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        sqlite3_close(pMonsterDb);
+        return;
+    }
+
     int IDcount = sqlite3_column_int(stmt, 0);
     sqlite3_finalize(stmt);
 
@@ -454,16 +463,74 @@ static void vCliDC_Setup_CountScenarios()
         if (NULL != ScenarioNames[ScenarioIDs[i]])
         {
             printf("\n%s | ", ScenarioNames[ScenarioIDs[i]]);
-            for (int j = 0; j < 5; j++) // TODO: How do I make sure I get all the participants?? Just use more sql here instead of functions?
+
+            // TODO: sql to print out each scenario's name on its own line
+
+            for (int j = 0; j < 5; j++)
             {
-                vCliDC_Lookup_FindParticipant(ScenarioIDs[i], &qty, &partID); // Pass through ScenarioIDs[i], &qty, and &partID
-                vCliDC_Lookup_FindInitiative(ScenarioIDs[i], partID); // Pass through ScenarioIDs[i] and partID
+                vCliDC_Lookup_FindParticipant(ScenarioIDs[i]); // Pass through ScenarioIDs[i] and print participant lists and initiatives
+                // vCliDC_Lookup_FindInitiative(ScenarioIDs[i], partID); // Pass through ScenarioIDs[i] and partID
             }
         }
     }
 
     return;
 }
+
+static void vCliDC_Lookup_FindParticipant(int ScenarioID)
+{
+    sqlite3_stmt *stmt = NULL;
+    const char sql = "SELECT name, quantity WHERE scenarioid IS ?";
+
+    int rc = sqlite3_prepare_v2(pMonsterDb, sql, -1, &stmt, NULL);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_close(pMonsterDb);
+        return;
+    }
+
+    rc = sqlite3_bind_int(pMonsterDb, 1, ScenarioID);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "Failed to bind scenarioid: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_finalize(stmt);
+        return;
+    }
+
+    int found = 0;
+
+    /* Print table header */
+    printf("-----------------------------\n");
+    printf("|      Name      | Quantity |\n");
+    printf("-----------------------------\n");
+
+    /* Print columns from database as rows in table */
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+    {
+        found = 1;
+        const char *name = (const char *)sqlite3_column_text(stmt, 1);      
+        int qty = sqlite3_column_int(stmt, 5);
+
+        // TODO: FINISH ADDING SIZE TO QUERIES AND TABLE
+
+        printf("|%-3d | %-25s | %-32s | %-10s | %-3s | %-3d| %-2d |\n", id, name, type, size, cr, hp, ac);
+    }
+
+    /* End table */
+    printf("---------------------------------------------------------------------------------------------------\n");
+
+    if (0 == found)
+    {
+        printf("Lookup value %s not found.\n", buffer);
+    }
+
+    if (rc != SQLITE_DONE) {
+        fprintf(stderr, "Error during iteration: %s\n", sqlite3_errmsg(pMonsterDb));
+        sqlite3_close(pMonsterDb);
+    }
+}
+
 
 static void vCliDC_Setup_DisplayContents()
 {
