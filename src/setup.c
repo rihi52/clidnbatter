@@ -15,6 +15,10 @@
  *========================================================================*
  */
 
+char PlayersInScenario[CHARACTER_BUFFER];
+char MonstersInScenario[MONSTER_BUFFER];
+int MonsterInitiativesInScenario[ALLOWED_MONSTERS];
+
 /*========================================================================*
  *  SECTION - Local function prototypes                                   *
  *========================================================================*
@@ -361,6 +365,9 @@ void gvCliDC_Setup_FindParticipant(int ScenarioID)
     printf("| Initiative |              Name              | Quantity |\n");
     printf("----------------------------------------------------------\n");
 
+    int nameIndex = 0, startPosition = 0, length = 0;
+    char endchar = ' ';
+    
     /* Print columns from database as rows in table */
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
     {
@@ -368,10 +375,55 @@ void gvCliDC_Setup_FindParticipant(int ScenarioID)
         const char *name = (const char *)sqlite3_column_text(stmt, 1);
         int qty = sqlite3_column_int(stmt, 2);
         int initiative = sqlite3_column_int(stmt, 3);
+        
+        length = strlen(name);
 
-        if(PlayerOrMonster == 0)
+        if(PlayerOrMonster == 0) // 0 = player
         {
             // Add player name to PlayersInScenario
+            //char NameToAdd[INPUT_BUFFER_BYTE];
+            //strcpy(NameToAdd, name);
+            part *newPlayer = NULL;
+
+            newPlayer = gvCliDC_Combat_CreatePlayer(name);
+
+            if (newPlayer == NULL)
+            {
+                printf("Error: No player in database\n\n");
+                return;
+            }
+
+            gvCliDC_Combat_SetInitiative(newPlayer);
+
+            printf("Player: %s, Initiative: %d\n", newPlayer->name, newPlayer->initiative);
+
+            /* DON'T NEED ANY OF THIS, LEAVING IT HERE IN CASE I'M WRONG. REPLACED BY THE ABOVE  TODO ****
+            
+            // /* Read the inputted players into PlayersInScenario[] one at a time ***
+            // for (int i = startPosition; i <= length; i++)
+            // {
+            //     if (name[i] != ',' && name[i] != '\n' && name[i] != '\0')
+            //     {
+            //         if (nameIndex < CHARACTER_BUFFER)
+            //         {
+            //             PlayersInScenario[nameIndex] = name[i];
+            //             nameIndex++;                    
+            //         }
+            //     }
+            //     else
+            //     {
+            //         endchar = PlayersInScenario[i];
+            //         PlayersInScenario[i] = ',';
+            //         nameIndex++;
+            //         //startPosition = i + 1;
+            //         break;
+            //     }
+            // }
+            // /* Null terminate player's name 
+            // PlayersInScenario[nameIndex-1] = '\0';
+
+            ******/
+
         }
         else if(PlayerOrMonster == 1)
         {

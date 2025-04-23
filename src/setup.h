@@ -17,9 +17,9 @@
  *  SECTION - Global variables
  *========================================================================*
  */
-char PlayersInScenario[CHARACTER_BUFFER];
-char MonstersInScenario[MONSTER_BUFFER];
-int MonsterInitiativesInScenario[ALLOWED_MONSTERS];
+extern char PlayersInScenario[CHARACTER_BUFFER];
+extern char MonstersInScenario[MONSTER_BUFFER];
+extern int MonsterInitiativesInScenario[ALLOWED_MONSTERS];
 
 /*========================================================================*
  *  SECTION - Extern global function prototypes                           *

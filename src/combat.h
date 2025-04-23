@@ -29,4 +29,7 @@ typedef struct part{
 void gvCliDC_Combat_Main(int ScenarioOrDirect);
 int CliDC_Combat_ChoosePlayers(char *ChosenPlayers, size_t size);
 int CliDC_Combat_ChooseMonstsers(char *ChosenPlayers, size_t size);
+part *gvCliDC_Combat_CreatePlayer(char *name);
+void gvCliDC_Combat_SetInitiative(struct part *person);
+int gvCliDC_Combat_ReadsNameAndAsksInitiativeAssignsStruct(int length);
 #endif  /*combat.h*/
