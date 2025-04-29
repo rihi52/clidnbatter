@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS "participants" (id INTEGER PRIMARY KEY, name TEXT, qu
 ```
 
 ```c
-int gvCliDC_Combat_ReadsNameAndAsksInitiativeAssignsStruct()
+int giCliDC_Combat_ReadsNameAndAsksInitiativeAssignsStruct()
 {
     memset(namePlayers, '\0', sizeof(namePlayers));
     int nameIndex = 0;

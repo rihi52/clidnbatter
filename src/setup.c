@@ -338,7 +338,7 @@ static void vCliDC_Setup_DisplayScenarios()
     return;
 }
 
-void gvCliDC_Setup_FindParticipant(int ScenarioID)
+void gvCliDC_Setup_FindParticipant(int ScenarioID, int ChosenOrDisplay)
 {
     sqlite3_stmt *stmt = NULL;
     
@@ -381,49 +381,29 @@ void gvCliDC_Setup_FindParticipant(int ScenarioID)
         if(PlayerOrMonster == 0) // 0 = player
         {
             // Add player name to PlayersInScenario
-            //char NameToAdd[INPUT_BUFFER_BYTE];
-            //strcpy(NameToAdd, name);
-            part *newPlayer = NULL;
-
-            newPlayer = gvCliDC_Combat_CreatePlayer(name);
-
-            if (newPlayer == NULL)
-            {
-                printf("Error: No player in database\n\n");
-                return;
-            }
-
-            gvCliDC_Combat_SetInitiative(newPlayer);
-
-            printf("Player: %s, Initiative: %d\n", newPlayer->name, newPlayer->initiative);
-
-            /* DON'T NEED ANY OF THIS, LEAVING IT HERE IN CASE I'M WRONG. REPLACED BY THE ABOVE  TODO ****
             
-            // /* Read the inputted players into PlayersInScenario[] one at a time ***
-            // for (int i = startPosition; i <= length; i++)
-            // {
-            //     if (name[i] != ',' && name[i] != '\n' && name[i] != '\0')
-            //     {
-            //         if (nameIndex < CHARACTER_BUFFER)
-            //         {
-            //             PlayersInScenario[nameIndex] = name[i];
-            //             nameIndex++;                    
-            //         }
-            //     }
-            //     else
-            //     {
-            //         endchar = PlayersInScenario[i];
-            //         PlayersInScenario[i] = ',';
-            //         nameIndex++;
-            //         //startPosition = i + 1;
-            //         break;
-            //     }
-            // }
-            // /* Null terminate player's name 
-            // PlayersInScenario[nameIndex-1] = '\0';
-
-            ******/
-
+            /* Read the inputted players into PlayersInScenario[] one at a time ***/
+            for (int i = startPosition; i <= length; i++)
+            {
+                if (name[i] != ',' && name[i] != '\n' && name[i] != '\0')
+                {
+                    if (nameIndex < CHARACTER_BUFFER)
+                    {
+                        PlayersInScenario[nameIndex] = name[i];
+                        nameIndex++;                    
+                    }
+                }
+                else
+                {
+                    endchar = PlayersInScenario[i];
+                    PlayersInScenario[i] = ',';
+                    nameIndex++;
+                    break;
+                }
+            }
+            /* Null terminate player's name */
+            PlayersInScenario[nameIndex-1] = '\0';
+            
         }
         else if(PlayerOrMonster == 1)
         {
@@ -434,11 +414,13 @@ void gvCliDC_Setup_FindParticipant(int ScenarioID)
         {
 
         }
+        
 
         // TODO: FINISH ADDING SIZE TO QUERIES AND TABLE
 
         printf("|  %-8d  | %-30s |    %-5d |\n", initiative, name, qty);
     }
+    PlayersInScenario[nameIndex-1] = '\n';
 
     /* End table */
     printf("----------------------------------------------------------\n");
@@ -561,7 +543,7 @@ void gvCliDC_Setup_CountScenarios(int ScenarioOrCombatMenu)
 
             if (SCENARIO_MENU == ScenarioOrCombatMenu)
             {
-                gvCliDC_Setup_FindParticipant(ScenarioIDs[i]); // Pass through ScenarioIDs[i] and print participant lists and initiatives
+                gvCliDC_Setup_FindParticipant(ScenarioIDs[i], DISPLAY); // Pass through ScenarioIDs[i] and print participant lists and initiatives
             }
             else
             {

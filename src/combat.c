@@ -46,6 +46,7 @@ static int AffectedSpot = 0;
 static int UsedInitiative[INITIATIVE_SPREAD];
 static int CurrentInitiative = 0;
 static int PrintCounter = -1;
+static int startPosition = 0;
 part *combatants[INITIATIVE_SPREAD];
 
  /*=======================================================================*
@@ -114,7 +115,7 @@ static int vCliDC_Combat_ScenarioCombatSetUp()
         if (1 == ScenarioExists)
         {
             printf("\nScenario to load: \n");
-            gvCliDC_Lookup_PrintSingleScenario(ScenarioID);
+            gvCliDC_Lookup_PrintSingleScenario(ScenarioID, DISPLAY);
             printf("Is this correct? (y/n): ");
 
             while (check == 1)
@@ -679,11 +680,19 @@ void gvCliDC_Combat_Main(int ScenarioOrDirect)
     if (SCENARIO_COMBAT == ScenarioOrDirect)
     {
         int status = vCliDC_Combat_ScenarioCombatSetUp();
+        int loop = 0;
+
         if (RETURN_HOME == status)
         {
             return;
         }
 
+        startPosition = 0;
+        while (0 == loop || 1 == loop)
+        {
+            loop = giCliDC_Combat_ReadsNameAndAsksInitiativeAssignsStruct(PlayersInScenario);
+        }
+        
     }
     else
     {
@@ -691,7 +700,7 @@ void gvCliDC_Combat_Main(int ScenarioOrDirect)
 
         char namePlayers[CHARACTER_BUFFER];
         char endchar = ' ';
-        int length, startPosition = 0, loop = 0;
+        int length, loop = 0;
         part *newPlayer = NULL;
         /* Loop to acquire player information
         * Two loop statuses so the user input functions can be returned to if needed */
@@ -716,8 +725,11 @@ void gvCliDC_Combat_Main(int ScenarioOrDirect)
                 loop = 1;
             }
 
-            loop = gvCliDC_Combat_ReadsNameAndAsksInitiativeAssignsStruct(length);
+            loop = giCliDC_Combat_ReadsNameAndAsksInitiativeAssignsStruct(players);
             printf("loop: %d\n", loop);
+
+
+            /* DON'T NEED ANY OF THIS, LEAVING IT HERE IN CASE I'M WRONG. REPLACED BY THE ABOVE  TODO ****
 
             // memset(namePlayers, '\0', sizeof(namePlayers));
             // int nameIndex = 0;
@@ -908,30 +920,31 @@ int CliDC_Combat_ChoosePlayers(char *ChosenPlayers, size_t size)
     return result;
 }
 
-int gvCliDC_Combat_ReadsNameAndAsksInitiativeAssignsStruct(int length)
+int giCliDC_Combat_ReadsNameAndAsksInitiativeAssignsStruct(char *ChosenCharacters)
 {
     char namePlayers[CHARACTER_BUFFER];
     char endchar = ' ';
     int nameIndex = 0;
-    int startPosition = 0;
+    
     part *newPlayer = NULL;
 
-    memset(namePlayers, '\0', sizeof(namePlayers));    
+    memset(namePlayers, '\0', sizeof(namePlayers));
+    int length = strlen(ChosenCharacters);
 
     /* Read the inputted players into players[] one at a time */
     for (int i = startPosition; i <= length; i++)
     {
-        if (players[i] != ',' && players[i] != '\n')
+        if (ChosenCharacters[i] != ',' && ChosenCharacters[i] != '\n')
         {
             if (nameIndex < CHARACTER_BUFFER)
             {
-                namePlayers[nameIndex] = players[i];
+                namePlayers[nameIndex] = ChosenCharacters[i];
                 nameIndex++;
             }
         }
         else
         {
-            endchar = players[i];
+            endchar = ChosenCharacters[i];
             startPosition = i + 1;
             break;
         }

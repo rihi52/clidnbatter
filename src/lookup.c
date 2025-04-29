@@ -420,7 +420,7 @@ int giCliDC_Lookup_ScenarioExist(char *Name)
     return id;
 }
 
-void gvCliDC_Lookup_PrintSingleScenario(int ScenarioID)
+void gvCliDC_Lookup_PrintSingleScenario(int ScenarioID, int ChosenOrDisplay)
 {
     char ScenarioName[INPUT_BUFFER_BYTE];
     memset(ScenarioName, '\0', sizeof(ScenarioName));
@@ -470,7 +470,7 @@ void gvCliDC_Lookup_PrintSingleScenario(int ScenarioID)
     printf("| %-54s | \n", ScenarioName);
     printf("----------------------------------------------------------\n");
 
-    gvCliDC_Setup_FindParticipant(ScenarioID); // Pass through ScenarioIDs[i] and print participant lists and initiatives
+    gvCliDC_Setup_FindParticipant(ScenarioID, DISPLAY); // Pass through ScenarioIDs[i] and print participant lists and initiatives
 }
 
 void gvCliDC_Lookup_Main()

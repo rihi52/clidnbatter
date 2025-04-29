@@ -24,6 +24,6 @@ void gvCliDC_DatabaseClose();
 int giCliDC_Lookup_PlayerAc(char *Name);
 int giCliDC_Lookup_PlayerHp(char *Name);
 int giCliDC_Lookup_ScenarioExist(char *Name);
-void gvCliDC_Lookup_PrintSingleScenario(int ScenarioID);
+void gvCliDC_Lookup_PrintSingleScenario(int ScenarioID, int ChosenOrDisplay);
 
 #endif /* lookup.h */

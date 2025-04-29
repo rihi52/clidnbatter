@@ -9,9 +9,11 @@
  *  SECTION - Global definitions
  *========================================================================*
  */
-#define SCENARIO_MENU   0
-#define COMBAT_MENU     1
-#define ALLOWED_MONSTERS 20
+#define SCENARIO_MENU       0
+#define COMBAT_MENU         1
+#define ALLOWED_MONSTERS    20
+#define CHOSEN              0
+#define DISPLAY             1
 
 /*========================================================================*
  *  SECTION - Global variables
@@ -27,7 +29,7 @@ extern int MonsterInitiativesInScenario[ALLOWED_MONSTERS];
  */
 void gvCliDC_Setup_Main();
 void gvCliDC_Setup_CountScenarios(int ScenarioOrCombatMenu);
-void gvCliDC_Setup_FindParticipant(int ScenarioID);
+void gvCliDC_Setup_FindParticipant(int ScenarioID, int ChosenOrDisplay);
 
 
 #endif /* setup.h */
