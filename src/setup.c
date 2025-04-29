@@ -365,7 +365,7 @@ void gvCliDC_Setup_FindParticipant(int ScenarioID, int ChosenOrDisplay)
     printf("| Initiative |              Name              | Quantity |\n");
     printf("----------------------------------------------------------\n");
 
-    int nameIndex = 0, startPosition = 0, length = 0;
+    int PlayerNameIndex = 0, MonsterNameIndex = 0, startPosition = 0, length = 0, monsterStartPosition = 0;
     char endchar = ' ';
     
     /* Print columns from database as rows in table */
@@ -378,7 +378,7 @@ void gvCliDC_Setup_FindParticipant(int ScenarioID, int ChosenOrDisplay)
         
         length = strlen(name);
 
-        if(PlayerOrMonster == 0) // 0 = player
+        if(PlayerOrMonster == PLAYER) // 0 = player
         {
             // Add player name to PlayersInScenario
             
@@ -387,27 +387,50 @@ void gvCliDC_Setup_FindParticipant(int ScenarioID, int ChosenOrDisplay)
             {
                 if (name[i] != ',' && name[i] != '\n' && name[i] != '\0')
                 {
-                    if (nameIndex < CHARACTER_BUFFER)
+                    if (PlayerNameIndex < CHARACTER_BUFFER)
                     {
-                        PlayersInScenario[nameIndex] = name[i];
-                        nameIndex++;                    
+                        PlayersInScenario[PlayerNameIndex] = name[i];
+                        PlayerNameIndex++;                    
                     }
                 }
                 else
                 {
                     endchar = PlayersInScenario[i];
                     PlayersInScenario[i] = ',';
-                    nameIndex++;
+                    PlayerNameIndex++;
                     break;
                 }
             }
             /* Null terminate player's name */
-            PlayersInScenario[nameIndex-1] = '\0';
+            PlayersInScenario[PlayerNameIndex-1] = '\0';
             
         }
-        else if(PlayerOrMonster == 1)
+        else if(PlayerOrMonster == MONSTER)
         {
+            // TODO: monster name is being added to MonstersInScenario, but quantity is not being taken into account
+            // Still also need to deal with monster preset initiative and add to combat
             // Add monster name to Monsters in Scenario
+            for (int i = monsterStartPosition; i <= length; i++)
+            {
+                if (name[i] != ',' && name[i] != '\n' && name[i] != '\0')
+                {
+                    if (MonsterNameIndex < CHARACTER_BUFFER)
+                    {
+                        MonstersInScenario[MonsterNameIndex] = name[i];
+                        MonsterNameIndex++;       
+                    }
+                }
+                else
+                {
+                    endchar = MonstersInScenario[i];
+                    MonstersInScenario[i] = ',';
+                    MonsterNameIndex++;
+                    break;
+                }
+            }
+            /* Null terminate player's name */
+            MonstersInScenario[MonsterNameIndex-1] = '\0';
+            
             // Add monster initiative to MonsterInitiativesInScenario
         }
         else
@@ -420,7 +443,7 @@ void gvCliDC_Setup_FindParticipant(int ScenarioID, int ChosenOrDisplay)
 
         printf("|  %-8d  | %-30s |    %-5d |\n", initiative, name, qty);
     }
-    PlayersInScenario[nameIndex-1] = '\n';
+    PlayersInScenario[PlayerNameIndex-1] = '\n';
 
     /* End table */
     printf("----------------------------------------------------------\n");
@@ -440,7 +463,7 @@ static void vCliDC_Setup_DisplayContents()
 
 static void vCliDC_Setup_LaunchScenario()
 {
-    // int loop = 1;
+    // int loop = 1; TODO
     // while (1 == loop)
     // {
     //     printf("\n*** Launch Scenario Menu ***\n");

@@ -14,6 +14,8 @@
 #define ALLOWED_MONSTERS    20
 #define CHOSEN              0
 #define DISPLAY             1
+#define PLAYER              0
+#define MONSTER             1
 
 /*========================================================================*
  *  SECTION - Global variables
