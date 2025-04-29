@@ -1,5 +1,11 @@
-Get rid of initiatives table and put initiatives in the participants table.
-Use zero for players/anyone the dm wants to do intiative at the table for.
+<!-- Get rid of initiatives table and put initiatives in the participants table.
+Use zero for players/anyone the dm wants to do intiative at the table for. -->
+
+Need to enable healing for combatants at 0 hp
+Finish modify and launch options on Scenario Setup Menu
+Fix all the warnings
+Check valgrind and fix memory leaks
+
 ```sql
 DROP TABLE initiatives;
 DROP TABLE participants;

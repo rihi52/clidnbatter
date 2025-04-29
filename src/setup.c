@@ -19,6 +19,9 @@ char PlayersInScenario[CHARACTER_BUFFER];
 char MonstersInScenario[MONSTER_BUFFER];
 int MonsterInitiativesInScenario[ALLOWED_MONSTERS];
 
+part *ScenarioMonsterHead;
+part *ScenarioMonsterTail;
+
 /*========================================================================*
  *  SECTION - Local function prototypes                                   *
  *========================================================================*
@@ -367,6 +370,9 @@ void gvCliDC_Setup_FindParticipant(int ScenarioID, int ChosenOrDisplay)
 
     int PlayerNameIndex = 0, MonsterNameIndex = 0, startPosition = 0, length = 0, monsterStartPosition = 0;
     char endchar = ' ';
+    ScenarioMonsterHead = NULL;
+    ScenarioMonsterTail = NULL;
+    part *newMonster = NULL;
     
     /* Print columns from database as rows in table */
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
@@ -407,31 +413,30 @@ void gvCliDC_Setup_FindParticipant(int ScenarioID, int ChosenOrDisplay)
         }
         else if(PlayerOrMonster == MONSTER)
         {
-            // TODO: monster name is being added to MonstersInScenario, but quantity is not being taken into account
-            // Still also need to deal with monster preset initiative and add to combat
-            // Add monster name to Monsters in Scenario
-            for (int i = monsterStartPosition; i <= length; i++)
+            for (int i = 0; i < qty; i++)
             {
-                if (name[i] != ',' && name[i] != '\n' && name[i] != '\0')
+                newMonster = gvCliDC_Combat_CreateMonster(name);
+                newMonster->initiative = initiative;
+                if (newMonster == NULL)
                 {
-                    if (MonsterNameIndex < CHARACTER_BUFFER)
-                    {
-                        MonstersInScenario[MonsterNameIndex] = name[i];
-                        MonsterNameIndex++;       
-                    }
+                    printf("Error: newMonster returned NULL.\n");
+                    return;
+                }
+
+                if (NULL == ScenarioMonsterHead)
+                {
+                    ScenarioMonsterHead = newMonster;
                 }
                 else
                 {
-                    endchar = MonstersInScenario[i];
-                    MonstersInScenario[i] = ',';
-                    MonsterNameIndex++;
-                    break;
+                    ScenarioMonsterTail->next = newMonster;
                 }
+
+                ScenarioMonsterTail = newMonster;
+
+                newMonster = newMonster->next;
             }
-            /* Null terminate player's name */
-            MonstersInScenario[MonsterNameIndex-1] = '\0';
-            
-            // Add monster initiative to MonsterInitiativesInScenario
+            gvCliDC_Combat_AddToInitiativeOrder(ScenarioMonsterHead);
         }
         else
         {

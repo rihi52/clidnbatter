@@ -32,4 +32,6 @@ int CliDC_Combat_ChooseMonstsers(char *ChosenPlayers, size_t size);
 part *gvCliDC_Combat_CreatePlayer(char *name);
 void gvCliDC_Combat_SetInitiative(struct part *person);
 int giCliDC_Combat_ReadsNameAndAsksInitiativeAssignsStruct(char *ChosenCharacters);
+part *gvCliDC_Combat_CreateMonster(char *name);
+void gvCliDC_Combat_AddToInitiativeOrder(part *pAddition);
 #endif  /*combat.h*/

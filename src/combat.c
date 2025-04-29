@@ -16,10 +16,7 @@ static void vCliDC_Combat_PlayerSetUp();
 // static int CliDC_Combat_ChoosePlayers();
 
 // static int CliDC_Combat_ChooseMonstsers();
-static part *vCliDC_Combat_CreateMonster(char *name);
 
-
-static void vCliDC_Combat_AddToInitiativeOrder(part *pAddition);
 static void vCliDC_Combat_PrintInitiativeOrder();
 static void vCliDC_Combat_PrintCurrentTurn();
 static void vCliDC_Combat_IncrementTurn();
@@ -115,6 +112,17 @@ static int vCliDC_Combat_ScenarioCombatSetUp()
         if (1 == ScenarioExists)
         {
             printf("\nScenario to load: \n");
+            int i = 0;
+            for(int i = 0; i < INITIATIVE_SPREAD; i++)
+            {
+                if (combatants[i] != NULL && i == 0)
+                {
+                    vCliDC_Combat_FreeCombatants();
+                    i++;
+                }
+                combatants[i] = NULL;
+            }
+
             gvCliDC_Lookup_PrintSingleScenario(ScenarioID, DISPLAY);
             printf("Is this correct? (y/n): ");
 
@@ -156,7 +164,7 @@ static int vCliDC_Combat_ScenarioCombatSetUp()
     // Create player structs and add to combatants[] by using scenario player names to look up the players from the players table
     // Get initiative for players at run time and add to player struct before adding to combatants[]
     // Do the same thing above for monsters except initiative is in scenarios table
-        // Create structs for monsters and add to initiative using vCliDC_Combat_CreateMonster
+        // Create structs for monsters and add to initiative using gvCliDC_Combat_CreateMonster
     return 0;
 }
 
@@ -238,7 +246,7 @@ int CliDC_Combat_ChooseMonstsers(char *ChosenMonsters, size_t size)
     return 0;
 }
 
-part *vCliDC_Combat_CreateMonster(char *name)
+part *gvCliDC_Combat_CreateMonster(char *name)
 {
     /* Create new node for new monster */
     part *new = malloc(sizeof(part));
@@ -348,11 +356,11 @@ void gvCliDC_Combat_SetInitiative(struct part *person)
     }
 
     /* 1 for a single unique combatant - should #define */
-    vCliDC_Combat_AddToInitiativeOrder(person);
+    gvCliDC_Combat_AddToInitiativeOrder(person);
     return;
 }
 
-static void vCliDC_Combat_AddToInitiativeOrder(part *pAddition)
+void gvCliDC_Combat_AddToInitiativeOrder(part *pAddition)
 {
     if (NULL == pAddition)
     {
@@ -728,59 +736,6 @@ void gvCliDC_Combat_Main(int ScenarioOrDirect)
             loop = giCliDC_Combat_ReadsNameAndAsksInitiativeAssignsStruct(players);
             printf("loop: %d\n", loop);
 
-
-            /* DON'T NEED ANY OF THIS, LEAVING IT HERE IN CASE I'M WRONG. REPLACED BY THE ABOVE  TODO ****
-
-            // memset(namePlayers, '\0', sizeof(namePlayers));
-            // int nameIndex = 0;
-
-            // /* Read the inputted players into players[] one at a time */
-            // for (int i = startPosition; i <= length; i++)
-            // {
-            //     if (players[i] != ',' && players[i] != '\n')
-            //     {
-            //         if (nameIndex < CHARACTER_BUFFER)
-            //         {
-            //             namePlayers[nameIndex] = players[i];
-            //             nameIndex++;
-            //         }
-            //     }
-            //     else
-            //     {
-            //         endchar = players[i];
-            //         startPosition = i + 1;
-            //         break;
-            //     }
-            // }
-            // /* Null terminate player's name */
-            // namePlayers[nameIndex] = '\0';
-
-            // /* If there is no name do not attempt to create a player struct and restart loop */
-            // if ('\0' != namePlayers[0])
-            // {
-            //     newPlayer = gvCliDC_Combat_CreatePlayer(namePlayers);
-            // }
-            // else
-            // {
-            //     loop = 0;
-            //     continue;
-            // }
-
-            // if (newPlayer == NULL)
-            // {
-            //     printf("Please re-enter players' names or enter 'x' to return to home\n\n");
-            //     loop = 0;
-            //     continue;
-            // }
-
-            // gvCliDC_Combat_SetInitiative(newPlayer);
-
-            // if (endchar == '\n')
-            // {
-            //     loop = 2;
-            //     break;
-            // }
-
             /* return either 0, 1, or 2 for loop instructions. everything else is either passed through or global */
         }
 
@@ -831,7 +786,7 @@ void gvCliDC_Combat_Main(int ScenarioOrDirect)
             part *tail = NULL;
             for (int i = 0; i < num; i++)
             {
-                newMonster = vCliDC_Combat_CreateMonster(nameMonsters);
+                newMonster = gvCliDC_Combat_CreateMonster(nameMonsters);
                 if (newMonster == NULL)
                 {
                     printf("Error: newMonster returned NULL.\n");
