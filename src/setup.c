@@ -50,6 +50,11 @@ static void vCliDC_Setup_ScenarioMenu()
 {
     int ScenarioID;
     ScenarioID = CliDC_Setup_CreateScenario();
+    if (ScenarioID == -1)
+    {
+        return;
+    }
+    
     int loop = 1;
     while (1 == loop)
     {
@@ -126,6 +131,14 @@ static int CliDC_Setup_CreateScenario()
     }
 
     /* TODO: Check scenario name doesn't already exist */
+    int DoesItExist = giCliDC_Global_DoesNameExist(ScenarioName, SCENARIOS);
+
+    if (DoesItExist == YES)
+    {
+        printf("Scenario name already exists\n");
+        return -1;
+    }
+
     const char *sql = "INSERT INTO scenarios (name) VALUES (?);";
 
     stmt = CliDC_Global_PrepareAndBindText(sql, ScenarioName);

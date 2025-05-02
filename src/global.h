@@ -11,6 +11,15 @@
  *  SECTION - Global definitions 
  *========================================================================* 
  */
+/* SQL Tables */
+#define MONSTERS        0
+#define PARTICIPANTS    1
+#define PLAYERS         2
+#define SCENARIOS       3
+
+#define YES             1
+#define NO              0
+
 /* Buffers */
 #define CHARACTER_BUFFER_BYTE       100
 #define SMALL_BUFFER_BYTE           10
@@ -37,5 +46,6 @@ void gvCliDC_Global_CheckIntegerInputs(int *numberOf);
 int giCliDC_Global_GetTextInput(char *Buffer, size_t Size);
 int giCliDC_Global_YesNoInput(char *Buffer, size_t Size);
 sqlite3_stmt *CliDC_Global_PrepareAndBindText(const char *sql, const char *BindValue);
+int giCliDC_Global_DoesNameExist(const char *LookupText, int LookupTable);
 
 #endif /* gloabl.h */

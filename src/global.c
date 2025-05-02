@@ -134,3 +134,49 @@ sqlite3_stmt *CliDC_Global_PrepareAndBindText(const char *sql, const char *BindV
 
     return stmt;
 }
+
+int giCliDC_Global_DoesNameExist(const char *LookupText, int LookupTable)
+{
+    int rc, Value;
+    sqlite3_stmt *stmt = NULL;
+    const char *sql;
+
+    switch (LookupTable)
+    {
+        case MONSTERS:
+            sql = "SELECT EXISTS(SELECT 1 FROM monsters WHERE name = ? COLLATE NOCASE)";
+            break;
+
+        case PARTICIPANTS:
+            sql = "SELECT EXISTS(SELECT 1 FROM participants WHERE name = ? COLLATE NOCASE)";
+            break;
+
+        case PLAYERS:
+            sql = "SELECT EXISTS(SELECT 1 FROM players WHERE name = ? COLLATE NOCASE)";
+            break;
+
+        case SCENARIOS:
+            sql = "SELECT EXISTS(SELECT 1 FROM scenarios WHERE name = ? COLLATE NOCASE)";
+            break;
+
+        default:
+            printf("\nINVALED SELECTION\n");
+            Value = 2; /* ERROR */
+    }
+
+    stmt = CliDC_Global_PrepareAndBindText(sql, LookupText);
+
+    rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW)
+    {
+        Value = sqlite3_column_int(stmt, 0);
+    }
+    else
+    {
+        fprintf(stderr, "Failed to retrieve result: %s\n", sqlite3_errmsg(pMonsterDb));
+    }
+
+    sqlite3_finalize(stmt);
+
+    return Value;
+}
