@@ -135,7 +135,7 @@ static int CliDC_Setup_CreateScenario()
 
     if (DoesItExist == YES)
     {
-        printf("Scenario name already exists\n");
+        printf("\n** Scenario name already exists **\n");
         return -1;
     }
 
@@ -396,65 +396,68 @@ void gvCliDC_Setup_FindParticipant(int ScenarioID, int ChosenOrDisplay)
         int initiative = sqlite3_column_int(stmt, 3);
         
         length = strlen(name);
-
-        if(PlayerOrMonster == PLAYER) // 0 = player
+        if (ChosenOrDisplay == CHOSEN)
         {
-            // Add player name to PlayersInScenario
-            
-            /* Read the inputted players into PlayersInScenario[] one at a time ***/
-            for (int i = startPosition; i <= length; i++)
+            if(PlayerOrMonster == PLAYER) // 0 = player
             {
-                if (name[i] != ',' && name[i] != '\n' && name[i] != '\0')
+                // Add player name to PlayersInScenario
+                
+                /* Read the inputted players into PlayersInScenario[] one at a time ***/
+                for (int i = startPosition; i <= length; i++)
                 {
-                    if (PlayerNameIndex < CHARACTER_BUFFER)
+                    if (name[i] != ',' && name[i] != '\n' && name[i] != '\0')
                     {
-                        PlayersInScenario[PlayerNameIndex] = name[i];
-                        PlayerNameIndex++;                    
+                        if (PlayerNameIndex < CHARACTER_BUFFER)
+                        {
+                            PlayersInScenario[PlayerNameIndex] = name[i];
+                            PlayerNameIndex++;                    
+                        }
+                    }
+                    else
+                    {
+                        endchar = PlayersInScenario[i];
+                        PlayersInScenario[i] = ',';
+                        PlayerNameIndex++;
+                        break;
                     }
                 }
-                else
-                {
-                    endchar = PlayersInScenario[i];
-                    PlayersInScenario[i] = ',';
-                    PlayerNameIndex++;
-                    break;
-                }
+                /* Null terminate player's name */
+                PlayersInScenario[PlayerNameIndex-1] = '\0';
+                
             }
-            /* Null terminate player's name */
-            PlayersInScenario[PlayerNameIndex-1] = '\0';
-            
-        }
-        else if(PlayerOrMonster == MONSTER)
-        {
-            for (int i = 0; i < qty; i++)
+            else if(PlayerOrMonster == MONSTER)
             {
-                newMonster = gvCliDC_Combat_CreateMonster(name);
-                newMonster->initiative = initiative;
-                if (newMonster == NULL)
+                for (int i = 0; i < qty; i++)
                 {
-                    printf("Error: newMonster returned NULL.\n");
-                    return;
-                }
+                    newMonster = gvCliDC_Combat_CreateMonster(name);
+                    newMonster->initiative = initiative;
+                    if (newMonster == NULL)
+                    {
+                        printf("Error: newMonster returned NULL.\n");
+                        return;
+                    }
 
-                if (NULL == ScenarioMonsterHead)
-                {
-                    ScenarioMonsterHead = newMonster;
-                }
-                else
-                {
-                    ScenarioMonsterTail->next = newMonster;
-                }
+                    if (NULL == ScenarioMonsterHead)
+                    {
+                        ScenarioMonsterHead = newMonster;
+                    }
+                    else
+                    {
+                        ScenarioMonsterTail->next = newMonster;
+                    }
 
-                ScenarioMonsterTail = newMonster;
+                    ScenarioMonsterTail = newMonster;
 
-                newMonster = newMonster->next;
+                    newMonster = newMonster->next;
+                }
+                gvCliDC_Combat_AddToInitiativeOrder(ScenarioMonsterHead);
             }
-            gvCliDC_Combat_AddToInitiativeOrder(ScenarioMonsterHead);
-        }
-        else
-        {
+            else
+            {
 
+            }
         }
+        
         
 
         // TODO: FINISH ADDING SIZE TO QUERIES AND TABLE
@@ -470,6 +473,7 @@ void gvCliDC_Setup_FindParticipant(int ScenarioID, int ChosenOrDisplay)
         fprintf(stderr, "Error during iteration: %s\n", sqlite3_errmsg(pMonsterDb));
         sqlite3_close(pMonsterDb);
     }
+    sqlite3_finalize(stmt);
 }
 
 

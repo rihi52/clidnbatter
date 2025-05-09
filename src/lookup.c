@@ -466,11 +466,19 @@ void gvCliDC_Lookup_PrintSingleScenario(int ScenarioID, int ChosenOrDisplay)
 
     sqlite3_finalize(stmt);
 
-    printf("\n*---------------------------------------------------------*\n");
-    printf("| %-54s | \n", ScenarioName);
-    printf("----------------------------------------------------------\n");
+    if (DISPLAY == ChosenOrDisplay)
+    {
+        printf("\n*---------------------------------------------------------*\n");
+        printf("| %-54s | \n", ScenarioName);
+        printf("----------------------------------------------------------\n");
 
-    gvCliDC_Setup_FindParticipant(ScenarioID, DISPLAY); // Pass through ScenarioIDs[i] and print participant lists and initiatives
+        gvCliDC_Setup_FindParticipant(ScenarioID, DISPLAY); // Pass through ScenarioIDs[i] and print participant lists and initiatives
+    }
+    else
+    {
+        gvCliDC_Setup_FindParticipant(ScenarioID, CHOSEN);
+    }
+    
 }
 
 void gvCliDC_Lookup_Main()

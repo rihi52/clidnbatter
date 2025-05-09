@@ -133,6 +133,7 @@ static int vCliDC_Combat_ScenarioCombatSetUp()
                 if (YES_INPUT == input)
                 {
                     /* Display scenario names */
+                    gvCliDC_Lookup_PrintSingleScenario(ScenarioID, CHOSEN);
                     check = 0;
                     Loop = 0;
                 }
